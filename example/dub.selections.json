@@ -1,0 +1,13 @@
+{
+	"fileVersion": 1,
+	"versions": {
+		"diet-ng": "1.2.0",
+		"fuzzydate": "1.0.0",
+		"libasync": "0.7.9",
+		"libevent": "2.0.2+2.0.16",
+		"memutils": "0.4.9",
+		"openssl": "1.1.5+1.0.1g",
+		"topcomments": {"path":".."},
+		"vibe-d": "0.7.30"
+	}
+}

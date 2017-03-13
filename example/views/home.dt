@@ -1,0 +1,16 @@
+html
+	head
+		title Diskuto Example
+		style.
+			body {
+				font-family: "Segoe UI", "Helvetica Neue", "Roboto Sans", "Open Sans", "Helvetica", sans-serif;
+			}
+	body
+		h1 Diskuto Example
+
+		p This is an example page with a comment section.
+
+		include diskuto.inc.comments
+		- includeDiskuto(diskuto, "example");
+
+		p This is a page footer.

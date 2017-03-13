@@ -1,0 +1,3 @@
+name "example"
+dependency "diskuto" path=".."
+dependency "vibe-d" version="~>0.7.30"

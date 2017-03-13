@@ -1,0 +1,8 @@
+﻿name "diskuto"
+description "Embeddale comment system"
+authors "Sönke Ludwig"
+copyright "Copyright © 2017, Sönke Ludwig"
+license "MIT"
+dependency "vibe-d:mongodb" version="~>0.7.30"
+dependency "vibe-d:web" version="~>0.7.30"
+dependency "fuzzydate" version="~>1.0.0"

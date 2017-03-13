@@ -1,0 +1,52 @@
+.diskuto table, .diskuto table input, .diskuto table button { width: 100%; }
+.diskuto button, .diskuto input, .diskuto textarea { box-sizing: border-box; padding: 1pt 0.3em; font-family: inherit; font-size: 80%; color: black; line-height: normal; }
+.diskuto .avatar { float: left; margin-right: 0.5em; margin-bottom: 0.5em; border-radius: 5px; border: 1px solid #fff; box-shadow: 0 0 5px 0 #aaa; }
+.diskuto textarea { width: 100%; resize: vertical; }
+.diskuto .error { color: red; }
+.diskuto .replies { padding-left: 2em; }
+.diskuto .action-bar { clear: left; }
+.diskuto .comment { margin: 1.5em 0; }
+.diskuto .comment .voting form { display: inline-block; margin: 0; }
+.diskuto .reply, .diskuto .edit, .diskuto .delete { display: none; }
+.diskuto .separator:after, .diskuto .voting:after { content: "•"; padding: 0 0.3em; color: #aaa; }
+.diskuto .separator, .diskuto .voting, .diskuto .voting button, .diskuto .voting .vote-count, .diskuto .vote-up,
+.diskuto .vote-down { display: inline-block; }
+.diskuto .vote-count {
+	box-sizing: border-box;
+	font-size: 80%;
+	padding: 1pt 0.3em;
+	color: black;
+	 border-top: 1px solid #ddd; border-bottom: 1px solid #ddd;
+	transition: all 0.3s ease;
+}
+.diskuto .vote-count.pos { background-color: #efd; }
+.diskuto .vote-count.bal { width: 0; padding-left: 0; padding-right: 0; }
+.diskuto .vote-count.neg { background-color: #fdd; }
+.diskuto .voting button.chosen { color: #fa4; font-weight: bold; background-color: #888; }
+.diskuto button, .diskuto input, .diskuto textarea {
+	border: 1px solid #ddd;
+	background-color: #f0f0f0;
+	box-shadow: 0 0px 5px 0 #ddd;
+}
+.diskuto input, .diskuto textarea {
+	background: white;
+}
+.diskuto button:active {
+	border: 1px solid #bbb;
+	background-color: #ddd;
+}
+.diskuto button:hover {
+	border: 1px solid #bbb;
+	background-color: #ccc;
+}
+.diskuto button:disabled {
+	border: 1px solid #d8d8d8;
+	background-color: #ddd;
+	box-shadow: none;
+}
+.diskuto .author, .diskuto .separator, .diskuto .date { font-size: 80%; }
+.diskuto .author { color: #fa4; font-weight: bold; }
+.diskuto a.author:hover { color: #fa4; font-weight: bold; text-decoration: underline; }
+.diskuto .date { text-decoration: none; color: #aaa; }
+.diskuto .date:hover:after { content: "¶"; margin-left: 0.25em; }
+.diskuto p { margin: 0; margin-bottom: 0.5em; margin-top: 0.25em; }
