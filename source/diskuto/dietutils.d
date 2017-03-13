@@ -8,7 +8,7 @@ struct Comment {
 	alias comment this;
 
 	Duration age;
-	string avatarURL;
+	string avatarID;
 	int avatarWidth;
 	int avatarHeight;
 	Comment*[] replies;
@@ -33,17 +33,20 @@ auto getCommentsContext(DiskutoBackend backend, string topic)
 	Info ret;
 	size_t[StoredComment.ID] map;
 	foreach (c; dbcomments) {
-		auto id = curidx++;
-		map[c.id] = id;
-		comments[id].age = now - c.time;
-		comments[id].comment = c;
-		comments[id].avatarWidth = 48;
-		comments[id].avatarHeight = 48;
-		comments[id].avatarURL = getGravatarURL(comments[id].email.length ? comments[id].email : comments[id].userID ~ "@diskuto", 64);
-		if (!c.replyTo.length) ret.comments ~= &comments[id];
+		auto idx = curidx++;
+		map[c.id] = idx;
+		comments[idx].age = now - c.time;
+		comments[idx].comment = c;
+		comments[idx].avatarWidth = 48;
+		comments[idx].avatarHeight = 48;
+		comments[idx].avatarID = c.email.length ? c.email : c.userID ~ "@diskuto";
+	}
+
+	foreach (ref c; comments) {
+		if (!c.replyTo.length) ret.comments ~= &c;
 		else {
 			if (auto rti = c.replyTo in map)
-				comments[*rti].replies ~= &comments[id];
+				comments[*rti].replies ~= &c;
 		}
 	}
 
@@ -70,13 +73,4 @@ auto getCommentsContext(DiskutoBackend backend, string topic)
 	sortRec(ret.comments);
 
 	return ret;
-}
-
-string getGravatarURL(string email, int size)
-{
-	import std.digest.md : hexDigest, MD5;
-	import std.format : format;
-	import std.string : toLower;
-
-	return format("https://www.gravatar.com/avatar/%s?d=retro&amp;s=%s", toLower(hexDigest!MD5(toLower(email)).idup), size);
 }
