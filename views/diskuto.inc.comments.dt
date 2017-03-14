@@ -11,13 +11,13 @@
 		- email = req.session.get("diskuto.email", "");
 		- website = req.session.get("diskuto.website", "");
 
-	form.reply-form(method="POST", action="#{req.rootDir}diskuto", onSubmit="return confirmReply(this)")
+	form.reply-form(method="POST", action="#{req.rootDir}diskuto", onSubmit="return confirmReply(this)", class=comment ? "" : "snapped")
 		input(type="hidden", name="topic", value=topic)
 		input(type="hidden", name="reply_to", value=comment ? comment.id : "")
 		table
 			tr
 				td(colspan=4 + (comment ? 1 : 0))
-					textarea(name="text", rows=3)
+					textarea(name="text", rows=3, placeholder=trWeb("Type here to add a comment."), onfocus="updateFormSnap(this)", onblur="updateFormSnap(this)", onchange="updateFormSnap(this)", onkeydown="updateFormSnap(this)", onkeyup="updateFormSnap(this)")
 			tr
 				td: input(type="text", name="name", value=name, placeholder=trWeb("Name (optional)"))
 				td: input(type="text", name="email", value=email, placeholder=trWeb("Email (optional)"), title=trWeb("Used for notifications and avatar image only"))

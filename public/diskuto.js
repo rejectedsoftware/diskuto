@@ -1,3 +1,14 @@
+function updateFormSnap(self)
+{
+	var form = getClassAncestor(self, "reply-form");
+	var has_focus = getClassAncestor(document.activeElement, "reply-form") == form;
+	var has_text = self.value.length > 0;
+	console.log(has_focus);
+	console.log(has_text);
+	form.classList.toggle("snapped", !has_focus && !has_text);
+	form.classList.toggle("controls-snapped", !has_text);
+}
+
 function vote(self, dir)
 {
 	var comment = getClassAncestor(self, "comment");
