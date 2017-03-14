@@ -1,6 +1,6 @@
 module diskuto.web;
 
-import diskuto.backend : StoredComment, DiskutoBackend;
+import diskuto.backend : CommentStatus, DiskutoBackend, StoredComment;
 
 import vibe.http.router : URLRouter;
 import vibe.http.server : HTTPServerRequest, HTTPServerResponse;
@@ -17,8 +17,11 @@ void registerDiskutoWeb(URLRouter router, DiskutoBackend backend)
 
 @path("diskuto")
 private final class DiskutoWeb {
+	import antispam.antispam;
+
 	private {
 		DiskutoBackend m_backend;
+		AntispamState m_antispam;
 		SessionVar!(string, "diskuto.userID") m_userID;
 		SessionVar!(string, "diskuto.name") m_sessionName;
 		SessionVar!(string, "diskuto.email") m_sessionEmail;
@@ -28,13 +31,18 @@ private final class DiskutoWeb {
 
 	this(DiskutoBackend backend)
 	{
+		import vibe.core.file : readFileUTF8;
+		import vibe.data.json : parseJsonString;
+
 		m_backend = backend;
+		m_antispam = new AntispamState;
+		m_antispam.loadConfig(parseJsonString(readFileUTF8("antispam.json")));
 	}
 
 	@errorDisplay!sendWebError
 	void post(HTTPServerRequest req, string name, string email, string website, string topic, string reply_to, string text)
 	{
-		auto id = doPost(name, email, website, topic, reply_to, text);
+		auto id = doPost(req, name, email, website, topic, reply_to, text);
 		redirectBack(req);
 	}
 
@@ -56,7 +64,7 @@ private final class DiskutoWeb {
 	void postPost(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto data = req.json;
-		auto id = doPost(
+		auto id = doPost(req,
 			data["name"].get!string,
 			data["email"].get!string,
 			data["website"].get!string,
@@ -144,7 +152,7 @@ private final class DiskutoWeb {
 		redirectBack(req, "diskuto-error", _error);
 	}
 
-	private string doPost(string name, string email, string website, string topic, string reply_to, string text)
+	private string doPost(HTTPServerRequest req, string name, string email, string website, string topic, string reply_to, string text)
 	{
 		import std.datetime : Clock, UTC;
 
@@ -167,6 +175,15 @@ private final class DiskutoWeb {
 		m_sessionEmail = email;
 		m_sessionHomepage = website;
 
+		string id;
+		bool is_spam_async = false;
+
+		checkSpamState(req, name, email, website, text, {
+			if (id.length)
+				m_backend.setCommentStatus(id, CommentStatus.spam);
+			is_spam_async = true;
+		});
+
 		StoredComment comment;
 		comment.userID = getUserID();
 		comment.topic = topic;
@@ -176,8 +193,11 @@ private final class DiskutoWeb {
 		comment.website = website;
 		comment.text = text;
 		comment.time = Clock.currTime(UTC());
-		auto id = m_backend.postComment(comment);
+		id = m_backend.postComment(comment);
 		m_sessionLastPost = id;
+
+		if (is_spam_async)
+			m_backend.setCommentStatus(id, CommentStatus.spam);
 		return id;
 	}
 
@@ -209,6 +229,34 @@ private final class DiskutoWeb {
 	{
 		//auto comment = m_backend.getComment(id);
 		return "<p class=\"contents\">TODO!</p>";
+	}
+
+	private void checkSpamState(HTTPServerRequest req, string name, string email, string website, string text, void delegate() @safe revoke)
+	{
+		import std.algorithm.comparison : among;
+		import std.algorithm.iteration : map, splitter;
+		import std.array : array;
+		import std.string : strip;
+
+		AntispamMessage msg;
+		msg.headers["From"] = name.length ? email.length ? name ~ " <" ~ email ~ ">" : name : email;
+		msg.headers["Subject"] = website; // TODO: maybe use a different header
+		msg.message = cast(const(ubyte)[])text;
+
+		if( auto pp = "X-Forwarded-For" in req.headers )
+			msg.peerAddress = (*pp).splitter(',').map!strip.array ~ req.peer;
+		else msg.peerAddress = [req.peer];
+
+		m_antispam.filterMessage!(
+			(status) {
+				if (status.among(SpamAction.revoke, SpamAction.block))
+					throw new Exception("Your message has been deemed abusive!");
+			},
+			(async_status) {
+				if (async_status.among!(SpamAction.revoke, SpamAction.block))
+					revoke();
+			}
+		)(msg);
 	}
 }
 

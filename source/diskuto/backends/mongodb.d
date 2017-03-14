@@ -11,6 +11,7 @@ import std.exception : enforce;
 
 
 class MongoDBBackend : DiskutoBackend {
+@trusted: // FIXME! vibe.d < 0.8.0 is not annotated with @safe
 	private {
 		MongoCollection m_comments;
 	}
@@ -29,6 +30,12 @@ class MongoDBBackend : DiskutoBackend {
 		mc._id = BsonObjectID.generate();
 		m_comments.insert(mc);
 		return mc._id.toString();
+	}
+
+	void setCommentStatus(StoredComment.ID id, CommentStatus status)
+	{
+		import std.conv : to;
+		m_comments.update(["_id": BsonObjectID.fromString(id)], ["$set": ["status", status.to!string]]);
 	}
 
 	void editComment(StoredComment.ID id, string new_text)
