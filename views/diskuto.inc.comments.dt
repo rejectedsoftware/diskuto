@@ -1,7 +1,6 @@
 - import diskuto.backend : DiskutoBackend;
 - import diskuto.dietutils : Comment, getCommentsContext;
 - import vibe.web.web : trWeb;
-- import vibe.textfilter.markdown;
 - import core.time : minutes;
 - import fuzzydate : toFuzzyDate;
 
@@ -34,9 +33,7 @@
 		.separator
 		a.date(href="\##{comment.id}", title=comment.time)= toFuzzyDate(comment.time)
 
-		.contents
-			- auto outp = &_diet_output;
-			- outp.filterMarkdown(comment.text, MarkdownFlags.forumDefault);
+		include diskuto.inc.commentContents
 
 		.action-bar
 			.voting

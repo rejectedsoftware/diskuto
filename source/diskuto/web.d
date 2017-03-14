@@ -42,7 +42,7 @@ private final class DiskutoWeb {
 	@errorDisplay!sendWebError
 	void post(HTTPServerRequest req, string name, string email, string website, string topic, string reply_to, string text)
 	{
-		auto id = doPost(req, name, email, website, topic, reply_to, text);
+		doPost(req, name, email, website, topic, reply_to, text);
 		redirectBack(req);
 	}
 
@@ -64,7 +64,7 @@ private final class DiskutoWeb {
 	void postPost(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto data = req.json;
-		auto id = doPost(req,
+		auto comment = doPost(req,
 			data["name"].get!string,
 			data["email"].get!string,
 			data["website"].get!string,
@@ -79,7 +79,7 @@ private final class DiskutoWeb {
 		}
 
 		Reply reply;
-		reply.rendered = renderComment(id);
+		reply.rendered = renderComment(req, comment);
 		res.writeJsonBody(reply);
 	}
 
@@ -96,7 +96,7 @@ private final class DiskutoWeb {
 		}
 
 		Reply reply;
-		reply.rendered = renderComment(data["id"].get!string);
+		reply.rendered = renderCommentContents(data["text"].get!string);
 		res.writeJsonBody(reply);
 	}
 
@@ -152,7 +152,7 @@ private final class DiskutoWeb {
 		redirectBack(req, "diskuto-error", _error);
 	}
 
-	private string doPost(HTTPServerRequest req, string name, string email, string website, string topic, string reply_to, string text)
+	private StoredComment doPost(HTTPServerRequest req, string name, string email, string website, string topic, string reply_to, string text)
 	{
 		import std.datetime : Clock, UTC;
 
@@ -175,15 +175,6 @@ private final class DiskutoWeb {
 		m_sessionEmail = email;
 		m_sessionHomepage = website;
 
-		string id;
-		bool is_spam_async = false;
-
-		checkSpamState(req, name, email, website, text, {
-			if (id.length)
-				m_backend.setCommentStatus(id, CommentStatus.spam);
-			is_spam_async = true;
-		});
-
 		StoredComment comment;
 		comment.userID = getUserID();
 		comment.topic = topic;
@@ -193,12 +184,21 @@ private final class DiskutoWeb {
 		comment.website = website;
 		comment.text = text;
 		comment.time = Clock.currTime(UTC());
-		id = m_backend.postComment(comment);
-		m_sessionLastPost = id;
+		comment.id = m_backend.postComment(comment);
+
+		bool is_spam_async = false;
+
+		checkSpamState(req, name, email, website, text, {
+			if (comment.id.length)
+				m_backend.setCommentStatus(comment.id, CommentStatus.spam);
+			is_spam_async = true;
+		});
+
+		m_sessionLastPost = comment.id;
 
 		if (is_spam_async)
-			m_backend.setCommentStatus(id, CommentStatus.spam);
-		return id;
+			m_backend.setCommentStatus(comment.id, CommentStatus.spam);
+		return comment;
 	}
 
 	private void redirectBack(HTTPServerRequest req, string field = null, string value = null)
@@ -225,10 +225,32 @@ private final class DiskutoWeb {
 		return m_userID;
 	}
 
-	private string renderComment(string id)
+	private string renderComment(HTTPServerRequest req, StoredComment scomment)
 	{
-		//auto comment = m_backend.getComment(id);
-		return "<p class=\"contents\">TODO!</p>";
+		import std.datetime : Clock, UTC;
+
+		import std.array : appender;
+		import diet.html : compileHTMLDietFile;
+		import diskuto.dietutils : Comment;
+
+		auto c = Comment(scomment, Clock.currTime(UTC()));
+		auto comment = &c;
+		auto uid = getUserID();
+		auto dst = appender!string();
+		dst.compileHTMLDietFile!("diskuto.part.comment.dt", req, comment, uid);
+		return dst.data;
+	}
+
+	private string renderCommentContents(string text)
+	{
+		import std.array : appender;
+		import diet.html : compileHTMLDietFile;
+
+		StoredComment comment;
+		comment.text = text;
+		auto dst = appender!string();
+		dst.compileHTMLDietFile!("diskuto.inc.commentContents.dt", comment);
+		return dst.data;
 	}
 
 	private void checkSpamState(HTTPServerRequest req, string name, string email, string website, string text, void delegate() @safe revoke)

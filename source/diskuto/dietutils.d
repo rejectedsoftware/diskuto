@@ -2,6 +2,7 @@ module diskuto.dietutils;
 
 import diskuto.backend : CommentStatus, DiskutoBackend, StoredComment;
 import core.time : Duration;
+import std.datetime : SysTime;
 
 struct Comment {
 	StoredComment comment;
@@ -12,6 +13,15 @@ struct Comment {
 	int avatarWidth;
 	int avatarHeight;
 	Comment*[] replies;
+
+	this(StoredComment comment, SysTime now)
+	{
+		this.comment = comment;
+		this.age = now - comment.time;
+		this.avatarWidth = 48;
+		this.avatarHeight = 48;
+		this.avatarID = comment.email.length ? comment.email : comment.userID ~ "@diskuto";
+	}
 
 	bool isVisibleTo(StoredComment.UserID user)
 	{
@@ -26,7 +36,7 @@ auto getCommentsContext(DiskutoBackend backend, string topic)
 {
 	import diskuto.backend : StoredComment;
 	import diskuto.dietutils : Comment;
-	import std.datetime : Clock, SysTime, UTC;
+	import std.datetime : Clock, UTC;
 	import std.algorithm.sorting : sort;
 
 	static struct Info {
@@ -43,11 +53,7 @@ auto getCommentsContext(DiskutoBackend backend, string topic)
 	foreach (c; dbcomments) {
 		auto idx = curidx++;
 		map[c.id] = idx;
-		comments[idx].age = now - c.time;
-		comments[idx].comment = c;
-		comments[idx].avatarWidth = 48;
-		comments[idx].avatarHeight = 48;
-		comments[idx].avatarID = c.email.length ? c.email : c.userID ~ "@diskuto";
+		comments[idx] = Comment(c, now);
 	}
 
 	foreach (ref c; comments) {
