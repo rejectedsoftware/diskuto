@@ -26,14 +26,14 @@ void generateSVGAvatar(R)(R dst, string id)
 	import std.format : formattedWrite;
 
 	static immutable(byte)[] matrix = [
-	   3, 3, 3, 2,
-	   2, 6, 7, 1,
+	   2, 4, 4, 3,
+	   3, 6, 7, 1,
 	   3, 8, 8, 4,
 	   0, 1, 3, 6,
 	   0, 0, 2, 6,
 	   1, 6, 1, 1,
-	   1, 4, 9, 9,
-	   0, 2, 6, 7,
+	   1, 4, 9, 7,
+	   0, 2, 7, 8,
 	];
 
 	uint rnd = 1534789237;
