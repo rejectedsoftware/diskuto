@@ -27,8 +27,8 @@ void generateSVGAvatar(R)(R dst, string id)
 
 	static immutable(byte)[] matrix = [
 	   2, 4, 4, 3,
-	   3, 6, 7, 1,
-	   3, 8, 8, 4,
+	   3, 6, 4, 1,
+	   3, 8, 4, 4,
 	   0, 1, 3, 6,
 	   0, 0, 2, 6,
 	   1, 6, 1, 1,
