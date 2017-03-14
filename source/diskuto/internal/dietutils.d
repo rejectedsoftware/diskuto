@@ -1,8 +1,10 @@
 module diskuto.internal.dietutils;
 
 import diskuto.backend : CommentStatus, DiskutoBackend, StoredComment;
-import core.time : Duration;
+import std.algorithm.comparison : max;
 import std.datetime : SysTime;
+import core.time : Duration, msecs;
+
 
 struct Comment {
 	StoredComment comment;
@@ -17,7 +19,7 @@ struct Comment {
 	this(StoredComment comment, SysTime now)
 	{
 		this.comment = comment;
-		this.age = now - comment.time;
+		this.age = max(now - comment.time, 1.msecs);
 		this.avatarWidth = 48;
 		this.avatarHeight = 48;
 		this.avatarID = comment.email.length ? comment.email : comment.userID ~ "@diskuto";
@@ -63,16 +65,15 @@ auto getCommentsContext(DiskutoBackend backend, string topic)
 		}
 	}
 
-	double getScore(Comment* c) {
+	static double getScore(Comment* c) {
 		// basic sortig based on the ratio of up and downvotes
 		double score = (c.upvotes.length + 1.0) / (c.downvotes.length + 1.0);
 
 		// new comments get a boost for about a week (and comments
 		// with the same basic score will stay sorted by time)
 		// negative comments will only get a boost for around an hour
-		auto age = now - c.time;
-		if (score < 1.0) score += 0.5 / (age.total!"seconds" / (60.0 * 60));
-		else score += 0.5 / (age.total!"seconds" / (7.0 * 24 * 60 * 60));
+		if (score < 1.0) score += 0.5 / (c.age.total!"seconds" / (60.0 * 60));
+		else score += 0.5 / (c.age.total!"seconds" / (7.0 * 24 * 60 * 60));
 
 		return score;
 	}
