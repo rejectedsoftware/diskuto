@@ -231,7 +231,7 @@ private final class DiskutoWeb {
 
 		import std.array : appender;
 		import diet.html : compileHTMLDietFile;
-		import diskuto.dietutils : Comment;
+		import diskuto.internal.dietutils : Comment;
 
 		auto c = Comment(scomment, Clock.currTime(UTC()));
 		auto comment = &c;

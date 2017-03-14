@@ -1,4 +1,4 @@
-module diskuto.dietutils;
+module diskuto.internal.dietutils;
 
 import diskuto.backend : CommentStatus, DiskutoBackend, StoredComment;
 import core.time : Duration;
@@ -35,7 +35,6 @@ struct Comment {
 auto getCommentsContext(DiskutoBackend backend, string topic)
 {
 	import diskuto.backend : StoredComment;
-	import diskuto.dietutils : Comment;
 	import std.datetime : Clock, UTC;
 	import std.algorithm.sorting : sort;
 
