@@ -25,7 +25,7 @@ private final class DiskutoWeb {
 		SessionVar!(string, "diskuto.userID") m_userID;
 		SessionVar!(string, "diskuto.name") m_sessionName;
 		SessionVar!(string, "diskuto.email") m_sessionEmail;
-		SessionVar!(string, "diskuto.homepage") m_sessionHomepage;
+		SessionVar!(string, "diskuto.website") m_sessionWebsite;
 		SessionVar!(string, "diskuto.lastPost") m_sessionLastPost;
 	}
 
@@ -173,7 +173,7 @@ private final class DiskutoWeb {
 
 		m_sessionName = name;
 		m_sessionEmail = email;
-		m_sessionHomepage = website;
+		m_sessionWebsite = website;
 
 		StoredComment comment;
 		comment.userID = getUserID();

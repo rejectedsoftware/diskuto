@@ -5,6 +5,12 @@
 - import fuzzydate : toFuzzyDate;
 
 - void commentForm(string topic, Comment* comment)
+	- string name, email, website;
+	- if (req.session)
+		- name = req.session.get("diskuto.name", "");
+		- email = req.session.get("diskuto.email", "");
+		- website = req.session.get("diskuto.website", "");
+
 	form.reply-form(method="POST", action="#{req.rootDir}diskuto", onSubmit="return confirmReply(this)")
 		input(type="hidden", name="topic", value=topic)
 		input(type="hidden", name="reply_to", value=comment ? comment.id : "")
@@ -13,9 +19,9 @@
 				td(colspan=4 + (comment ? 1 : 0))
 					textarea(name="text", rows=3)
 			tr
-				td: input(type="text", name="name", placeholder=trWeb("Name (optional)"))
-				td: input(type="text", name="email", placeholder=trWeb("Email (optional)"), title=trWeb("Used for notifications and avatar image only"))
-				td: input(type="text", name="website", placeholder=trWeb("Website (optional)"))
+				td: input(type="text", name="name", value=name, placeholder=trWeb("Name (optional)"))
+				td: input(type="text", name="email", value=email, placeholder=trWeb("Email (optional)"), title=trWeb("Used for notifications and avatar image only"))
+				td: input(type="text", name="website", value=website, placeholder=trWeb("Website (optional)"))
 				- if (comment)
 					td: button(type="button", onClick="cancelReply(this)")& Cancel
 				td: button(type="submit")& Submit
