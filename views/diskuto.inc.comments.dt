@@ -93,9 +93,7 @@
 		style @import url('#{req.rootDir}diskuto.css');
 		script(src="#{req.rootDir}diskuto.js")
 		script window.diskutoBaseURL = "#{req.rootDir}diskuto";
-		noscript
-			style.
-				.diskuto .reply { display: block; }
+		noscript: style @import url('#{req.rootDir}diskuto-noscript.css');
 
 		p& #{ctx.commentCount} comments
 

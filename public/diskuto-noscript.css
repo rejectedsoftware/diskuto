@@ -1,0 +1,3 @@
+.diskuto .reply { display: block; }
+.diskuto form.snapped input, .diskuto form.snapped button { max-height: none; opacity: 1.0; }
+.diskuto form.reply-form.snapped textarea { max-height: none; }
