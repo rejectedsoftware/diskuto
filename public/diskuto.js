@@ -60,7 +60,7 @@ function confirmReply(self)
 			var tmp = document.createElement('div');
 			tmp.innerHTML = reply.rendered;
 			replies.insertBefore(tmp.firstElementChild, replies.firstChild);
-			self.reset();
+			self.getElementsByTagName("textarea")[0].value = "";
 			cancelReply(self);
 		} else {
 			comment.getElementsByClassName("error")[0].textContent = reply.error;
