@@ -38,9 +38,11 @@ auto getCommentsContext(DiskutoBackend backend, string topic)
 {
 	import diskuto.backend : StoredComment;
 	import std.datetime : Clock, UTC;
+	import std.algorithm.searching : count;
 	import std.algorithm.sorting : sort;
 
 	static struct Info {
+		size_t commentCount;
 		Comment*[] comments;
 	}
 
@@ -50,6 +52,7 @@ auto getCommentsContext(DiskutoBackend backend, string topic)
 	auto comments = new Comment[](dbcomments.length);
 	size_t curidx;
 	Info ret;
+	ret.commentCount = dbcomments.count!(c => c.status == CommentStatus.active);
 	size_t[StoredComment.ID] map;
 	foreach (c; dbcomments) {
 		auto idx = curidx++;

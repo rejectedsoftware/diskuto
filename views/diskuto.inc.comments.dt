@@ -97,7 +97,7 @@
 			style.
 				.diskuto .reply { display: block; }
 
-		p& #{ctx.comments.length} comments
+		p& #{ctx.commentCount} comments
 
 		.error= req.query.get("diskuto-error", "")
 
