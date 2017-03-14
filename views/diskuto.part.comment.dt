@@ -1,0 +1,3 @@
+include diskuto.inc.comments
+
+- renderCommentRec(comment.topic, uid, comment);
