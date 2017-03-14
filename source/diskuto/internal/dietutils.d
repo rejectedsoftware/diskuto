@@ -72,12 +72,13 @@ auto getCommentsContext(DiskutoBackend backend, string topic)
 		// basic sortig based on the ratio of up and downvotes
 		double score = (c.upvotes.length + 1.0) / (c.downvotes.length + 1.0);
 
-		// new comments get a boost for about a week (and comments
+		// new comments get a boost for about two hours (and comments
 		// with the same basic score will stay sorted by time)
 		// negative comments will only get a boost for around an hour
 		if (score < 1.0) score += 0.5 / (c.age.total!"seconds" / (60.0 * 60));
-		else score += 0.5 / (c.age.total!"seconds" / (7.0 * 24 * 60 * 60));
+		else score += 0.5 / (c.age.total!"seconds" / (2.0 * 60 * 60));
 
+import vibe.core.log; logInfo("%s: %s", c.text, score);
 		return score;
 	}
 
