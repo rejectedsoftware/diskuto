@@ -21,7 +21,7 @@
 					td: button(type="button", onClick="cancelReply(this)")& Cancel
 				td: button(type="submit")& Submit
 
-- void renderCommentRec(string topic, Comment* comment)
+- void renderCommentRec(string topic, string uid, Comment* comment)
 	.comment(id=comment.id)
 		- import diskuto.avatar : generateAvatar;
 		- generateAvatar(&_diet_output, comment.avatarID);
@@ -39,7 +39,6 @@
 			- outp.filterMarkdown(comment.text, MarkdownFlags.forumDefault);
 
 		.action-bar
-			- auto uid = req.session ? req.session.get("diskuto.userID", "") : "";
 			.voting
 				- bool have_upvoted = uid.length && comment.upvotes.canFind(uid);
 				- bool have_downvoted = uid.length && comment.downvotes.canFind(uid);
@@ -78,11 +77,14 @@
 
 		.replies
 			- foreach (c; comment.replies)
-				- renderCommentRec(topic, c);
+				- if (c.isVisibleTo(uid))
+					- renderCommentRec(topic, uid, c);
 
 - void includeDiskuto(DiskutoBackend backend, string topic)
-	- auto ctx = getCommentsContext(backend, topic);
 	.diskuto
+		- auto ctx = getCommentsContext(backend, topic);
+		- auto uid = req.session ? req.session.get("diskuto.userID", "") : "";
+
 		style @import url('#{req.rootDir}diskuto.css');
 		script(src="#{req.rootDir}diskuto.js")
 		script window.diskutoBaseURL = "#{req.rootDir}diskuto";
@@ -98,4 +100,5 @@
 
 		.replies
 			- foreach (c; ctx.comments)
-				- renderCommentRec(topic, c);
+				- if (c.isVisibleTo(uid))
+					- renderCommentRec(topic, uid, c);

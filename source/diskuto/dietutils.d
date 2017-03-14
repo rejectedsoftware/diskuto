@@ -1,6 +1,6 @@
 module diskuto.dietutils;
 
-import diskuto.backend : DiskutoBackend, StoredComment;
+import diskuto.backend : CommentStatus, DiskutoBackend, StoredComment;
 import core.time : Duration;
 
 struct Comment {
@@ -12,6 +12,14 @@ struct Comment {
 	int avatarWidth;
 	int avatarHeight;
 	Comment*[] replies;
+
+	bool isVisibleTo(StoredComment.UserID user)
+	{
+		//if (isModerator(user)) return true;
+		if (comment.status == CommentStatus.deleted) return false;
+		if (comment.userID == user) return true;
+		return comment.status == CommentStatus.active;
+	}
 }
 
 auto getCommentsContext(DiskutoBackend backend, string topic)
