@@ -160,11 +160,13 @@ private final class DiskutoWeb {
 		enforce(text.length > 0, "Missing message text.");
 		enforce(text.length < 4096, "Message text is too long.");
 		if (email.length > 0) {
+			enforce(email.length < 80, "E-mail is too long.");
 			import vibe.utils.validation : validateEmail;
 			validateEmail(email);
 		}
 
 		if (website.length > 0) {
+			enforce(email.length < 80, "Website address is too long.");
 			import std.algorithm.comparison : among;
 			import vibe.inet.url : URL;
 			auto url = URL.parse(website);
