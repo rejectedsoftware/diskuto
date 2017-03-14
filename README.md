@@ -11,6 +11,7 @@ Discuto is a lightweight embeddable comment system made for integration with vib
 - Generic backend support (currently support for MongoDB is implemented)
 - Dynamic UI for replying, editing and deleting comments with JavaScript enabled
 - Minimum functionality also works with JavaScript disabled
+- Adjusts to the enclosing page's font family, color and size
 
 [![Build Status](https://travis-ci.org/rejectedsoftware/diskuto.svg?branch=master)](https://travis-ci.org/rejectedsoftware/diskuto)
 
