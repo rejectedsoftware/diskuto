@@ -78,7 +78,6 @@ auto getCommentsContext(DiskutoBackend backend, string topic)
 		if (score < 1.0) score += 0.5 / (c.age.total!"seconds" / (60.0 * 60));
 		else score += 0.5 / (c.age.total!"seconds" / (2.0 * 60 * 60));
 
-import vibe.core.log; logInfo("%s: %s", c.text, score);
 		return score;
 	}
 
