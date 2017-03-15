@@ -77,8 +77,10 @@ function showEdit(self)
 	var actionbar = getClassAncestor(self, "action-bar");
 	var comment = getClassAncestor(actionbar, "comment");
 	var area = comment.getElementsByClassName("edit")[0];
+	var text = area.getElementsByTagName("textarea")[0];
 	var contents = comment.getElementsByClassName("contents")[0];
 	area.style.display = "flex";
+	text.style.height = contents.offsetHeight;
 	actionbar.style.display = "none";
 	contents.style.display = "none";
 }
@@ -110,7 +112,6 @@ function confirmEdit(self)
 			var tmp = document.createElement('div');
 			tmp.innerHTML = reply.rendered;
 			comment.getElementsByClassName("contents")[0].innerHTML = tmp.getElementsByClassName("contents")[0].innerHTML;
-			self.reset();
 			cancelEdit(self);
 		} else {
 			comment.getElementsByClassName("error")[0].textContent = reply.error;
