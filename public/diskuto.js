@@ -3,9 +3,9 @@ function updateFormSnap(self)
 	var form = getClassAncestor(self, "reply-form");
 	var has_focus = getClassAncestor(document.activeElement, "reply-form") == form;
 	var has_text = self.value.length > 0;
-	console.log(has_focus);
-	console.log(has_text);
-	form.classList.toggle("expanded", has_focus || has_text);
+	var expanded = has_focus || has_text;
+	form.classList.toggle("expanded", expanded);
+	if (!expanded) form.getElementsByTagName("textarea")[0].style.height = "";
 	form.classList.toggle("controls-expanded", has_text);
 }
 

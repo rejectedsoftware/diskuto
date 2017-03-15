@@ -1,68 +1,50 @@
 .diskuto form { margin: 0; }
-.diskuto .comment { display: flex; flex-wrap: wrap; }
-.diskuto .right { flex-grow: 1; }
-.diskuto .action-bar { display: flex; flex-wrap: nowrap; align-items: flex-start; flex-basis: 100%; flex-shrink: 0; }
-.diskuto .contents { overflow: auto; max-height: 50em; }
-.diskuto .edit { display: flex; flex-wrap: wrap; }
-.diskuto .edit textarea { flex-basis: 100%; resize: vertical; }
-.diskuto form input, .diskuto form button { transition: all 0.3s ease; }
-.diskuto .reply-form { display: inline-flex; flex-basis: 100%; flex-wrap: wrap; }
-.diskuto .comment .reply-form { margin-left: 0.5em; }
-.diskuto form.reply-form textarea { max-height: 1.5em; flex-basis: 100%; resize: none; }
-.diskuto .comment form.reply-form textarea { max-height: 1.5em; flex-basis: 14em; resize: none; }
-.diskuto form.reply-form input { flex-grow: 1; }
-.diskuto form.reply-form input, .diskuto form.reply-form button { max-height: 0; opacity: 0; }
-.diskuto form.reply-form.controls-expanded input, .diskuto form.controls-expanded button { max-height: none; opacity: 1; }
-.diskuto form.reply-form.expanded textarea { max-height: none; resize: vertical; flex-basis: 100%; }
-.diskuto table, .diskuto table input, .diskuto table button { width: 100%; }
-.diskuto button, .diskuto input, .diskuto textarea { box-sizing: border-box; padding: 1pt 0.3em; font-family: inherit; font-size: 90%; color: black; line-height: normal; }
-.diskuto .avatar { float: left; margin-right: 0.5em; margin-bottom: 0.5em; border-radius: 5px; border: 1px solid #fff; box-shadow: 0 0 5px 0 #aaa; width: 48px; height: 48px; }
-.diskuto .comment .comment .avatar { width: 42px; height: 42px; }
-.diskuto .error { color: red; }
-.diskuto .replies .replies { padding-left: 2em; }
-.diskuto .action-bar { clear: left; }
-.diskuto .comment { margin: 1.5em 0; }
-.diskuto .edit, .diskuto .delete { display: none; }
-.diskuto .separator:after { content: "•"; padding: 0 0.3em; color: #aaa; }
-.diskuto .separator, .diskuto .voting button, .diskuto .voting .vote-count, .diskuto .vote-up,
-.diskuto .vote-down { display: inline-block; }
-.diskuto .edit-button { margin-left: 0.5em; }
-.diskuto .vote-count {
-	box-sizing: border-box;
-	font-size: 90%;
+.diskuto p { margin: 0; margin-bottom: 0.5em; margin-top: 0.25em; }
+.diskuto button, .diskuto input, .diskuto textarea, .diskuto .vote-count {
+	box-sizing: content-box;
 	padding: 1pt 0.3em;
+	font-family: inherit;
+	font-size: 90%;
 	color: black;
-	 border-top: 1px solid #ddd; border-bottom: 1px solid #ddd;
-	transition: all 0.3s ease;
-}
-.diskuto .vote-count.pos { background-color: #efd; }
-.diskuto .vote-count.bal { width: 0; padding-left: 0; padding-right: 0; }
-.diskuto .vote-count.neg { background-color: #fdd; }
-.diskuto .voting button.chosen { color: #fa4; font-weight: bold; background-color: #888; }
-.diskuto button, .diskuto input, .diskuto textarea {
+	line-height: 1.5em;
 	border: 1px solid #ddd;
-	background-color: #f0f0f0;
 	box-shadow: 0 0px 5px 0 #ddd;
 }
-.diskuto input, .diskuto textarea {
-	background: white;
-}
-.diskuto button:active {
-	border: 1px solid #bbb;
-	background-color: #ddd;
-}
-.diskuto button:hover {
-	border: 1px solid #bbb;
-	background-color: #ccc;
-}
-.diskuto button:disabled {
-	border: 1px solid #d8d8d8;
-	background-color: #ddd;
-	box-shadow: none;
-}
-.diskuto .author, .diskuto .separator, .diskuto .date { font-size: 80%; }
+.diskuto input, .diskuto textarea { background: white; }
+.diskuto input, .diskuto button { transition: all 0.3s ease; }
+.diskuto button { background-color: #f0f0f0; }
+.diskuto button.chosen { color: #fa4; font-weight: bold; background-color: #888; }
+.diskuto button:active { border: 1px solid #bbb; background-color: #ddd; }
+.diskuto button:hover { border: 1px solid #bbb; background-color: #ccc; }
+.diskuto button:disabled { border: 1px solid #d8d8d8; background-color: #ddd; box-shadow: none; }
+.diskuto .comment { display: flex; flex-wrap: wrap; margin: 1.5em 0; }
+.diskuto .avatar { margin-right: 0.5em; margin-bottom: 0.5em; border-radius: 5px; border: 1px solid #fff; box-shadow: 0 0 5px 0 #aaa; width: 48px; height: 48px; }
+.diskuto .comment .comment .avatar { width: 42px; height: 42px; }
+.diskuto .right { flex-grow: 1; flex-basis: 0; }
+.diskuto .author, .diskuto .date { font-size: 80%; }
 .diskuto .author { color: #fa4; font-weight: bold; }
 .diskuto a.author:hover { color: #fa4; font-weight: bold; text-decoration: underline; }
 .diskuto .date { text-decoration: none; color: #aaa; }
-.diskuto .date:hover:after { content: "¶"; margin-left: 0.25em; }
-.diskuto p { margin: 0; margin-bottom: 0.5em; margin-top: 0.25em; }
+.diskuto .date:before { color: #fa4; font-weight: bold; content: "•"; padding: 0 0.3em; color: #aaa; }
+.diskuto .date:hover:after { content: "⚓"; margin-left: 0.25em; }
+.diskuto .contents { overflow: auto; max-height: 50em; }
+.diskuto .error { color: red; }
+.diskuto .action-bar { display: flex; flex-wrap: nowrap; align-items: flex-start; flex-basis: 100%; flex-shrink: 0; }
+.diskuto .vote-count { border-left: none; border-right: none; transition: all 0.3s ease; }
+.diskuto .vote-count.pos { background-color: #efd; }
+.diskuto .vote-count.bal { width: 0; padding-left: 0; padding-right: 0; }
+.diskuto .vote-count.neg { background-color: #fdd; }
+.diskuto .edit-button { margin-left: 0.5em; }
+.diskuto .edit, .diskuto .delete { display: none; }
+.diskuto .edit { flex-wrap: wrap; }
+.diskuto .edit textarea { flex-basis: 100%; resize: vertical; }
+.diskuto .reply-form { display: inline-flex; flex-basis: 100%; flex-wrap: wrap; margin: -4pt; }
+.diskuto .reply-form > * { margin: 4pt; }
+.diskuto .reply-form textarea { height: 1.5em; flex-basis: 100%; resize: none; transition: all 0.3s ease; }
+.diskuto .reply-form input { flex-grow: 1; flex-basis: 0; }
+.diskuto .reply-form input, .diskuto .reply-form button { margin-top: -2em; opacity: 0; z-index: -1; }
+.diskuto .comment .reply-form { margin-left: 0.5em; }
+.diskuto .comment .reply-form textarea { height: 1.5em; flex-basis: 14em; }
+.diskuto .reply-form.expanded textarea { height: 9EM; resize: vertical; flex-basis: 100%; }
+.diskuto .reply-form.controls-expanded input, .diskuto form.controls-expanded button { margin-top: 0; opacity: 1; }
+.diskuto .replies .replies { padding-left: 2em; }

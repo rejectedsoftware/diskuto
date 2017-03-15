@@ -15,7 +15,7 @@
 		input(type="hidden", name="topic", value=topic)
 		input(type="hidden", name="reply_to", value=comment ? comment.id : "")
 		- auto ph = comment ? trWeb("Type here to reply.") : trWeb("Type here to leave a comment.");
-		textarea(name="text", rows=3, placeholder=ph, onfocus="updateFormSnap(this)", onblur="updateFormSnap(this)", onchange="updateFormSnap(this)", onkeydown="updateFormSnap(this)", onkeyup="updateFormSnap(this)")
+		textarea(name="text", rows=3, placeholder=ph, onfocus="updateFormSnap(this)", onblur="updateFormSnap(this)", onchange="updateFormSnap(this)", onkeydown="updateFormSnap(this)", onkeyup="updateFormSnap(this)", autocomplete="off")
 		input(type="text", name="name", value=name, placeholder=trWeb("Name (optional)"))
 		input(type="text", name="email", value=email, placeholder=trWeb("Email (optional)"), title=trWeb("Used for notifications and avatar image only"))
 		input(type="text", name="website", value=website, placeholder=trWeb("Website (optional)"))
@@ -34,7 +34,6 @@
 				span.author= comment.name
 			- else
 				span.author& Anonymous
-			.separator
 			a.date(href="\##{comment.id}", title=comment.time)= toFuzzyDate(comment.time)
 
 			include diskuto.inc.commentContents
@@ -43,7 +42,7 @@
 			
 			form.edit(method="POST", action="#{req.rootDir}ts/edit", onSubmit="return confirmEdit(this)")
 				input(type="hidden", name="id", value=comment.id)
-				textarea(name="text", rows=3)= comment.text
+				textarea(name="text", rows=3, autocomplete="off")= comment.text
 				button(type="button", onClick="cancelEdit(this)")& Cancel
 				button(type="submit")& Submit
 		
