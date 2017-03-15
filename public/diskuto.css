@@ -45,7 +45,7 @@
 .diskuto .edit { flex-wrap: wrap; }
 .diskuto .edit textarea { flex-basis: 100%; resize: vertical; }
 .diskuto > .reply-form { width: 100%; }
-.diskuto .reply-form { display: inline-flex; flex-basis: 100%; flex-wrap: wrap; margin: -4pt; }
+.diskuto .reply-form { display: flex; flex-basis: 100%; flex-wrap: wrap; margin: -4pt; }
 .diskuto .reply-form > * { margin: 4pt; }
 .diskuto .reply-form textarea { height: 1.5em; flex-basis: 100%; resize: none; transition: all 0.3s ease; z-index: 10; }
 .diskuto .reply-form input { flex-grow: 1; flex-basis: 0; }
