@@ -5,8 +5,8 @@ function updateFormSnap(self)
 	var has_text = self.value.length > 0;
 	console.log(has_focus);
 	console.log(has_text);
-	form.classList.toggle("snapped", !has_focus && !has_text);
-	form.classList.toggle("controls-snapped", !has_text);
+	form.classList.toggle("expanded", has_focus || has_text);
+	form.classList.toggle("controls-expanded", has_text);
 }
 
 function vote(self, dir)
@@ -24,9 +24,8 @@ function vote(self, dir)
 			count.textContent = newcount;
 			count.classList.remove("neg", "bal", "pos");
 			count.classList.add(newcount < 0 ? "neg" : newcount > 0 ? "pos" : "bal");
-			var voting = comment.getElementsByClassName("voting")[0];
-			var upbtn = voting.getElementsByClassName("vote-up")[0].getElementsByTagName("button")[0];
-			var downbtn = voting.getElementsByClassName("vote-down")[0].getElementsByTagName("button")[0];
+			var upbtn = comment.getElementsByClassName("vote-up")[0].getElementsByTagName("button")[0];
+			var downbtn = comment.getElementsByClassName("vote-down")[0].getElementsByTagName("button")[0];
 			upbtn.setAttribute("disabled", "");
 			downbtn.setAttribute("disabled", "");
 			if (dir < 0) downbtn.classList.add("chosen");
@@ -37,32 +36,18 @@ function vote(self, dir)
 	return false;
 }
 
-function showReply(self)
-{
-	var actionbar = getClassAncestor(self, "action-bar");
-	var area = actionbar.parentElement.getElementsByClassName("reply")[0];
-	area.style.display = "block";
-	actionbar.style.display = "none";
-}
-
-function cancelReply(self)
-{
-	var area = getClassAncestor(self, "reply");
-	var comment = area.parentElement;
-	var actionbar = comment.getElementsByClassName("action-bar")[0];
-	actionbar.style.display = "block";
-	area.style.display = "none";
-}
-
 function confirmReply(self)
 {
 	var comment = getClassAncestor(self, "comment");
 	if (!comment) comment = getClassAncestor(self, "diskuto");
+	var error = comment.getElementsByClassName("error")[0];
+	error.textContent = "";
+
 	var http = new XMLHttpRequest();
 	http.open("POST", window.diskutoBaseURL + "/post", true);
 	http.setRequestHeader("Content-type", "application/json");
 	http.onerror = function() {
-		comment.getElementsByClassName("error")[0].textContent = "Error performing request.";
+		error.textContent = "Error performing request.";
 	}
 	http.onload = function() {
 		var reply = JSON.parse(this.responseText);
@@ -71,8 +56,10 @@ function confirmReply(self)
 			var tmp = document.createElement('div');
 			tmp.innerHTML = reply.rendered;
 			replies.insertBefore(tmp.firstElementChild, replies.firstChild);
-			self.getElementsByTagName("textarea")[0].value = "";
-			cancelReply(self);
+			var text = self.getElementsByTagName("textarea")[0];
+			text.value = "";
+			document.activeElement.blur();
+			updateFormSnap(text);
 		} else {
 			comment.getElementsByClassName("error")[0].textContent = reply.error;
 		}
@@ -88,18 +75,23 @@ function confirmReply(self)
 function showEdit(self)
 {
 	var actionbar = getClassAncestor(self, "action-bar");
-	var area = actionbar.parentElement.getElementsByClassName("edit")[0];
-	area.style.display = "block";
+	var comment = getClassAncestor(actionbar, "comment");
+	var area = comment.getElementsByClassName("edit")[0];
+	var contents = comment.getElementsByClassName("contents")[0];
+	area.style.display = "flex";
 	actionbar.style.display = "none";
+	contents.style.display = "none";
 }
 
 function cancelEdit(self)
 {
-	var area = getClassAncestor(self, "edit");
-	var comment = area.parentElement;
+	var comment = getClassAncestor(self, "comment");
+	var area = comment.getElementsByClassName("edit")[0];
 	var actionbar = comment.getElementsByClassName("action-bar")[0];
-	actionbar.style.display = "block";
+	var contents = comment.getElementsByClassName("contents")[0];
 	area.style.display = "none";
+	actionbar.style.display = "flex";
+	contents.style.display = "block";
 }
 
 function confirmEdit(self)
@@ -134,18 +126,19 @@ function confirmEdit(self)
 
 function showDelete(self)
 {
-	var actionbar = getClassAncestor(self, "action-bar");
-	var area = actionbar.parentElement.getElementsByClassName("delete")[0];
+	var comment = getClassAncestor(self, "comment");
+	var actionbar = comment.getElementsByClassName("action-bar")[0];
+	var area = comment.getElementsByClassName("delete")[0];
 	area.style.display = "block";
 	actionbar.style.display = "none";
 }
 
 function cancelDelete(self)
 {
-	var area = getClassAncestor(self, "delete");
-	var comment = area.parentElement;
+	var comment = getClassAncestor(self, "comment");
+	var area = comment.getElementsByClassName("delete")[0];
 	var actionbar = comment.getElementsByClassName("action-bar")[0];
-	actionbar.style.display = "block";
+	actionbar.style.display = "flex";
 	area.style.display = "none";
 }
 

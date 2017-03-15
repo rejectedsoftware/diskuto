@@ -14,17 +14,12 @@
 	form.reply-form(method="POST", action="#{req.rootDir}diskuto", onSubmit="return confirmReply(this)", class=comment ? "" : "snapped")
 		input(type="hidden", name="topic", value=topic)
 		input(type="hidden", name="reply_to", value=comment ? comment.id : "")
-		table
-			tr
-				td(colspan=4 + (comment ? 1 : 0))
-					textarea(name="text", rows=3, placeholder=trWeb("Type here to add a comment."), onfocus="updateFormSnap(this)", onblur="updateFormSnap(this)", onchange="updateFormSnap(this)", onkeydown="updateFormSnap(this)", onkeyup="updateFormSnap(this)")
-			tr
-				td: input(type="text", name="name", value=name, placeholder=trWeb("Name (optional)"))
-				td: input(type="text", name="email", value=email, placeholder=trWeb("Email (optional)"), title=trWeb("Used for notifications and avatar image only"))
-				td: input(type="text", name="website", value=website, placeholder=trWeb("Website (optional)"))
-				- if (comment)
-					td: button(type="button", onClick="cancelReply(this)")& Cancel
-				td: button(type="submit")& Submit
+		- auto ph = comment ? trWeb("Type here to add a reply.") : trWeb("Type here to add a comment.");
+		textarea(name="text", rows=3, placeholder=ph, onfocus="updateFormSnap(this)", onblur="updateFormSnap(this)", onchange="updateFormSnap(this)", onkeydown="updateFormSnap(this)", onkeyup="updateFormSnap(this)")
+		input(type="text", name="name", value=name, placeholder=trWeb("Name (optional)"))
+		input(type="text", name="email", value=email, placeholder=trWeb("Email (optional)"), title=trWeb("Used for notifications and avatar image only"))
+		input(type="text", name="website", value=website, placeholder=trWeb("Website (optional)"))
+		button(type="submit")& Submit
 
 - void renderCommentRec(string topic, string uid, Comment* comment)
 	.comment(id=comment.id)
@@ -32,53 +27,51 @@
 		- import std.algorithm.searching : canFind;
 
 		- generateAvatar(&_diet_output, comment.avatarID);
-		- if (comment.website.length && comment.name.length)
-			a.author(href=comment.website)= comment.name
-		- else if (comment.name.length)
-			span.author= comment.name
-		- else
-			span.author& Anonymous
-		.separator
-		a.date(href="\##{comment.id}", title=comment.time)= toFuzzyDate(comment.time)
+		.right
+			- if (comment.website.length && comment.name.length)
+				a.author(href=comment.website)= comment.name
+			- else if (comment.name.length)
+				span.author= comment.name
+			- else
+				span.author& Anonymous
+			.separator
+			a.date(href="\##{comment.id}", title=comment.time)= toFuzzyDate(comment.time)
 
-		include diskuto.inc.commentContents
+			include diskuto.inc.commentContents
 
-		.action-bar
-			.voting
-				- bool have_upvoted = uid.length && comment.upvotes.canFind(uid);
-				- bool have_downvoted = uid.length && comment.downvotes.canFind(uid);
-				- auto vote_total = cast(long)comment.upvotes.length - cast(long)comment.downvotes.length;
-				
-				form.vote-up(method="POST", action="#{req.rootDir}diskuto/up", onSubmit="return vote(this, 1)")
-					input(type="hidden", name="id", value=comment.id)
-					button(type="submit", disabled=have_upvoted || have_downvoted, class=have_upvoted ? "chosen" : "") ▲
-				.vote-count(class=vote_total<0?"neg":vote_total>0?"pos":"bal")= vote_total
-				form.vote-down(method="POST", action="#{req.rootDir}diskuto/down", onSubmit="return vote(this, -1)")
-					input(type="hidden", name="id", value=comment.id)
-					button(type="submit", disabled=have_upvoted || have_downvoted, class=have_downvoted ? "chosen" : "") ▼
+			.error
 			
-			button(type="button", onClick="showReply(this)")& Reply
-			- if (comment.userID == uid && comment.age < 5.minutes)
-				button(type="button", onClick="showEdit(this)")& Edit
-				button(type="button", onClick="showDelete(this)")& Delete
-		.error
-		.reply
-			- commentForm(topic, comment);
-		.edit
-			form(method="POST", action="#{req.rootDir}ts/edit", onSubmit="return confirmEdit(this)")
+			form.edit(method="POST", action="#{req.rootDir}ts/edit", onSubmit="return confirmEdit(this)")
 				input(type="hidden", name="id", value=comment.id)
-				table
-					tr: td(colspan=3): textarea(name="text", rows=3)= comment.text
-					tr
-						td &nbsp;
-						td: button(type="button", onClick="cancelEdit(this)")& Cancel
-						td: button(type="submit")& Submit
-		.delete
-			form(method="POST", action="#{req.rootDir}ts/delete", onSubmit="return confirmDelete(this)")
+				textarea(name="text", rows=3)= comment.text
+				button(type="button", onClick="cancelEdit(this)")& Cancel
+				button(type="submit")& Submit
+		
+			form.delete(method="POST", action="#{req.rootDir}ts/delete", onSubmit="return confirmDelete(this)")
+				input(type="hidden", name="id", value=comment.id)
 				p& Do you really want to delete this comment?
-				input(type="hidden", name="id", value=comment.id)
 				button(type="button", onClick="cancelDelete(this)")& Cancel
 				button(type="submit")& Confirm
+
+		.action-bar
+			- bool have_upvoted = uid.length && comment.upvotes.canFind(uid);
+			- bool have_downvoted = uid.length && comment.downvotes.canFind(uid);
+			- bool vote_disabled = have_upvoted || have_downvoted || comment.userID == uid;
+			- auto vote_total = cast(long)comment.upvotes.length - cast(long)comment.downvotes.length;
+			
+			form.vote-up(method="POST", action="#{req.rootDir}diskuto/up", onSubmit="return vote(this, 1)")
+				input(type="hidden", name="id", value=comment.id)
+				button(type="submit", disabled=vote_disabled, class=have_upvoted ? "chosen" : "") ▲
+			.vote-count(class=vote_total<0?"neg":vote_total>0?"pos":"bal")= vote_total
+			form.vote-down(method="POST", action="#{req.rootDir}diskuto/down", onSubmit="return vote(this, -1)")
+				input(type="hidden", name="id", value=comment.id)
+				button(type="submit", disabled=vote_disabled, class=have_downvoted ? "chosen" : "") ▼
+			
+			- if (comment.userID == uid && comment.age < 5.minutes)
+				button.edit-button(type="button", onClick="showEdit(this)")& Edit
+				button.delete-button(type="button", onClick="showDelete(this)")& Delete
+
+			- commentForm(topic, comment);
 
 		.replies
 			- foreach (c; comment.replies)

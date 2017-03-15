@@ -1,22 +1,32 @@
+.diskuto form { margin: 0; }
+.diskuto .comment { display: flex; flex-wrap: wrap; }
+.diskuto .right { flex-grow: 1; }
+.diskuto .action-bar { display: flex; flex-wrap: nowrap; align-items: flex-start; flex-basis: 100%; flex-shrink: 0; }
 .diskuto .contents { overflow: auto; max-height: 50em; }
+.diskuto .edit { display: flex; flex-wrap: wrap; }
+.diskuto .edit textarea { flex-basis: 100%; resize: vertical; }
 .diskuto form input, .diskuto form button { transition: all 0.3s ease; }
-.diskuto form.controls-snapped input, .diskuto form.controls-snapped button, .diskuto form.snapped input, .diskuto form.snapped button { max-height: 0; opacity: 0; }
-.diskuto form.reply-form textarea { max-height: none; }
-.diskuto form.reply-form.snapped textarea { max-height: 1.5em; }
+.diskuto .reply-form { display: inline-flex; flex-basis: 100%; flex-wrap: wrap; }
+.diskuto .comment .reply-form { margin-left: 0.5em; }
+.diskuto form.reply-form textarea { max-height: 1.5em; flex-basis: 100%; resize: none; }
+.diskuto .comment form.reply-form textarea { max-height: 1.5em; flex-basis: 14em; resize: none; }
+.diskuto form.reply-form input { flex-grow: 1; }
+.diskuto form.reply-form input, .diskuto form.reply-form button { max-height: 0; opacity: 0; }
+.diskuto form.reply-form.controls-expanded input, .diskuto form.controls-expanded button { max-height: none; opacity: 1; }
+.diskuto form.reply-form.expanded textarea { max-height: none; resize: vertical; flex-basis: 100%; }
 .diskuto table, .diskuto table input, .diskuto table button { width: 100%; }
 .diskuto button, .diskuto input, .diskuto textarea { box-sizing: border-box; padding: 1pt 0.3em; font-family: inherit; font-size: 90%; color: black; line-height: normal; }
 .diskuto .avatar { float: left; margin-right: 0.5em; margin-bottom: 0.5em; border-radius: 5px; border: 1px solid #fff; box-shadow: 0 0 5px 0 #aaa; width: 48px; height: 48px; }
 .diskuto .comment .comment .avatar { width: 42px; height: 42px; }
-.diskuto textarea { width: 100%; resize: vertical; }
 .diskuto .error { color: red; }
 .diskuto .replies .replies { padding-left: 2em; }
 .diskuto .action-bar { clear: left; }
 .diskuto .comment { margin: 1.5em 0; }
-.diskuto .comment .voting form { display: inline-block; margin: 0; }
-.diskuto .reply, .diskuto .edit, .diskuto .delete { display: none; }
-.diskuto .separator:after, .diskuto .voting:after { content: "•"; padding: 0 0.3em; color: #aaa; }
-.diskuto .separator, .diskuto .voting, .diskuto .voting button, .diskuto .voting .vote-count, .diskuto .vote-up,
+.diskuto .edit, .diskuto .delete { display: none; }
+.diskuto .separator:after { content: "•"; padding: 0 0.3em; color: #aaa; }
+.diskuto .separator, .diskuto .voting button, .diskuto .voting .vote-count, .diskuto .vote-up,
 .diskuto .vote-down { display: inline-block; }
+.diskuto .edit-button { margin-left: 0.5em; }
 .diskuto .vote-count {
 	box-sizing: border-box;
 	font-size: 90%;

@@ -56,15 +56,15 @@ class MongoDBBackend : DiskutoBackend {
 	void upvote(StoredComment.ID id, StoredComment.UserID user)
 	{
 		static struct DQ { @name("$ne") string ne; }
-		static struct Q { BsonObjectID _id; DQ downvotes; }
-		m_comments.update(Q(BsonObjectID.fromString(id), DQ(user)), ["$addToSet": ["upvotes": user]]);
+		static struct Q { BsonObjectID _id; DQ downvotes; DQ userID; }
+		m_comments.update(Q(BsonObjectID.fromString(id), DQ(user), DQ(user)), ["$addToSet": ["upvotes": user]]);
 	}
 
 	void downvote(StoredComment.ID id, StoredComment.UserID user)
 	{
 		static struct DQ { @name("$ne") string ne; }
-		static struct Q { BsonObjectID _id; DQ upvotes; }
-		m_comments.update(Q(BsonObjectID.fromString(id), DQ(user)), ["$addToSet": ["downvotes": user]]);
+		static struct Q { BsonObjectID _id; DQ upvotes; DQ userID; }
+		m_comments.update(Q(BsonObjectID.fromString(id), DQ(user), DQ(user)), ["$addToSet": ["downvotes": user]]);
 	}
 
 	StoredComment[] getCommentsForTopic(string topic)
