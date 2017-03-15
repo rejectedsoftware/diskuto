@@ -6,6 +6,7 @@ import vibe.data.serialization : byName;
 interface DiskutoBackend {
 @safe:
 	StoredComment.ID postComment(StoredComment comment);
+	StoredComment getComment(StoredComment.ID comment);
 	void setCommentStatus(StoredComment.ID id, CommentStatus status);
 	void editComment(StoredComment.ID id, string new_text);
 	void deleteComment(StoredComment.ID id);

@@ -112,7 +112,9 @@ private final class DiskutoWebInterface {
 	void edit(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto data = req.json;
-		// FIXME: validate that user is author (+time limit) or moderator!
+
+		enforceAuthorizedToEdit(data["id"].get!string, m_userID);
+
 		m_backend.editComment(data["id"].get!string, data["text"].get!string);
 
 		static struct Reply {
@@ -129,7 +131,9 @@ private final class DiskutoWebInterface {
 	void postDelete(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto data = req.json;
-		// FIXME: validate that user is author (+time limit) or moderator!
+
+		enforceAuthorizedToEdit(data["id"].get!string, m_userID);
+
 		m_backend.deleteComment(data["id"].get!string);
 
 		static struct Reply { bool success = true; }
@@ -302,6 +306,17 @@ private final class DiskutoWebInterface {
 					revoke();
 			}
 		)(msg);
+	}
+
+	private void enforceAuthorizedToEdit(StoredComment.ID comment, StoredComment.UserID user)
+	{
+		import std.datetime : Clock, UTC;
+		import core.time : minutes;
+
+		auto c = m_backend.getComment(comment);
+		auto now = Clock.currTime(UTC());
+		enforce(c.userID == user, "Not allowed to modify comment.");
+		enforce(now - c.time < 15.minutes, "Comment cannot be modified anymore.");
 	}
 }
 

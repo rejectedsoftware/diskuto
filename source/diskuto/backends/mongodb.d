@@ -32,6 +32,11 @@ class MongoDBBackend : DiskutoBackend {
 		return mc._id.toString();
 	}
 
+	StoredComment getComment(StoredComment.ID comment)
+	{
+		return cast(StoredComment)m_comments.findOne!(MongoStruct!StoredComment)(["_id": BsonObjectID.fromString(comment)]);
+	}
+
 	void setCommentStatus(StoredComment.ID id, CommentStatus status)
 	{
 		import std.conv : to;
