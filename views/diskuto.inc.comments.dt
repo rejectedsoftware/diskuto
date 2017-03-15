@@ -14,7 +14,7 @@
 	form.reply-form(method="POST", action="#{req.rootDir}diskuto", onSubmit="return confirmReply(this)", class=comment ? "" : "snapped")
 		input(type="hidden", name="topic", value=topic)
 		input(type="hidden", name="reply_to", value=comment ? comment.id : "")
-		- auto ph = comment ? trWeb("Type here to add a reply.") : trWeb("Type here to add a comment.");
+		- auto ph = comment ? trWeb("Type here to reply.") : trWeb("Type here to leave a comment.");
 		textarea(name="text", rows=3, placeholder=ph, onfocus="updateFormSnap(this)", onblur="updateFormSnap(this)", onchange="updateFormSnap(this)", onkeydown="updateFormSnap(this)", onkeyup="updateFormSnap(this)")
 		input(type="text", name="name", value=name, placeholder=trWeb("Name (optional)"))
 		input(type="text", name="email", value=email, placeholder=trWeb("Email (optional)"), title=trWeb("Used for notifications and avatar image only"))
