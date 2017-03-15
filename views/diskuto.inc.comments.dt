@@ -1,5 +1,5 @@
-- import diskuto.backend : DiskutoBackend;
-- import diskuto.internal.dietutils : Comment, getCommentsContext;
+- import diskuto.web : DiskutoWeb;
+- import diskuto.internal.dietutils : Comment, createUID, getCommentsContext;
 - import vibe.web.web : trWeb;
 - import core.time : minutes;
 - import fuzzydate : toFuzzyDate;
@@ -85,10 +85,10 @@
 				- if (c.isVisibleTo(uid))
 					- renderCommentRec(topic, uid, c);
 
-- void includeDiskuto(DiskutoBackend backend, string topic)
+- void includeDiskuto(DiskutoWeb web, string topic)
 	.diskuto
-		- auto ctx = getCommentsContext(backend, topic);
-		- auto uid = req.session ? req.session.get("diskuto.userID", "") : "";
+		- auto ctx = getCommentsContext(web, topic);
+		- auto uid = web.uid;
 
 		style @import url('#{req.rootDir}diskuto.css');
 		script(src="#{req.rootDir}diskuto.js")

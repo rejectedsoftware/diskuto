@@ -1,10 +1,19 @@
 module diskuto.internal.dietutils;
 
 import diskuto.backend : CommentStatus, DiskutoBackend, StoredComment;
+import diskuto.web : DiskutoWeb;
 import std.algorithm.comparison : max;
 import std.datetime : SysTime;
 import core.time : Duration, msecs;
 
+
+enum SessionVars {
+	userID = "diskuto.userID",
+	name = "diskuto.name",
+	email = "diskuto.email",
+	website = "diskuto.website",
+	lastPost = "diskuto.lastPost"
+}
 
 struct Comment {
 	StoredComment comment;
@@ -34,12 +43,29 @@ struct Comment {
 	}
 }
 
-auto getCommentsContext(DiskutoBackend backend, string topic)
+string createUID()
+{
+	import vibe.web.web : SessionVar;
+
+	static SessionVar!(string, SessionVars.userID) uid;
+	if (!uid.length) {
+		import std.format : format;
+		import std.random : uniform;
+		// TODO: Use a cryptographic RNG from vibe.crypto.random. Not _really_ needed, but best practice anyway.
+		uid = format("%016X%016X", uniform!ulong(), uniform!ulong());
+		import vibe.core.log; logInfo("CREATE UID %s", uid);
+	}
+	return uid;
+}
+
+auto getCommentsContext(DiskutoWeb web, string topic)
 {
 	import diskuto.backend : StoredComment;
 	import std.datetime : Clock, UTC;
 	import std.algorithm.searching : count;
 	import std.algorithm.sorting : sort;
+
+	auto backend = web.backend;
 
 	static struct Info {
 		size_t commentCount;

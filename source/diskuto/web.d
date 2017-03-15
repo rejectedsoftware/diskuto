@@ -10,23 +10,48 @@ import std.exception : enforce;
 import std.typecons : Nullable;
 
 
-void registerDiskutoWeb(URLRouter router, DiskutoBackend backend)
+DiskutoWeb registerDiskutoWeb(URLRouter router, DiskutoBackend backend)
 {
-	router.registerWebInterface(new DiskutoWeb(backend));
+	auto wi = new DiskutoWebInterface(backend);
+	router.registerWebInterface(wi);
+	return DiskutoWeb(wi);
+}
+
+ struct DiskutoWeb {
+	private DiskutoWebInterface m_web;
+
+	package @property DiskutoBackend backend() { return m_web.m_backend; }
+
+	@property string uid()
+	{
+		assert(m_web.m_userID.length, "No UID, setupRequest() not called?");
+		return m_web.m_userID;
+	}
+
+	void setupRequest()
+	{
+		if (!m_web.m_userID.length) {
+			import std.format : format;
+			import std.random : uniform;
+			// TODO: Use a cryptographic RNG from vibe.crypto.random. Not _really_ needed, but best practice anyway.
+			m_web.m_userID = format("%016X%016X", uniform!ulong(), uniform!ulong());
+		}
+	}
 }
 
 @path("diskuto")
-private final class DiskutoWeb {
+private final class DiskutoWebInterface {
 	import antispam.antispam;
+	import diskuto.internal.dietutils : SessionVars;
 
 	private {
 		DiskutoBackend m_backend;
 		AntispamState m_antispam;
-		SessionVar!(string, "diskuto.userID") m_userID;
-		SessionVar!(string, "diskuto.name") m_sessionName;
-		SessionVar!(string, "diskuto.email") m_sessionEmail;
-		SessionVar!(string, "diskuto.website") m_sessionWebsite;
-		SessionVar!(string, "diskuto.lastPost") m_sessionLastPost;
+		SessionVar!(string, SessionVars.userID) m_userID;
+		SessionVar!(string, SessionVars.name) m_sessionName;
+		SessionVar!(string, SessionVars.email) m_sessionEmail;
+		SessionVar!(string, SessionVars.website) m_sessionWebsite;
+		SessionVar!(string, SessionVars.lastPost) m_sessionLastPost;
 	}
 
 	this(DiskutoBackend backend)
@@ -219,11 +244,7 @@ private final class DiskutoWeb {
 
 	private string getUserID()
 	{
-		if (!m_userID.length) {
-			import std.format : format;
-			import std.random : uniform;
-			m_userID = format("%016X%016X", uniform!ulong(), uniform!ulong());
-		}
+		enforce(m_userID.length, "Unauthorized request. Please make sure that your browser supports cookies.");
 		return m_userID;
 	}
 
