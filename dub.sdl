@@ -1,5 +1,5 @@
 ﻿name "diskuto"
-description "Embeddale comment system"
+description "Embedded comment engine"
 authors "Sönke Ludwig"
 copyright "Copyright © 2017, RejectedSoftware"
 license "MIT"
