@@ -195,7 +195,7 @@ private final class DiskutoWebInterface {
 		}
 
 		if (website.length > 0) {
-			enforce(email.length < 80, "Website address is too long.");
+			enforce(website.length < 80, "Website address is too long.");
 			import std.algorithm.comparison : among;
 			import vibe.inet.url : URL;
 			auto url = URL.parse(website);
