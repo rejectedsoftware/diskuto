@@ -11,7 +11,7 @@
 		- email = req.session.get("diskuto.email", "");
 		- website = req.session.get("diskuto.website", "");
 
-	form.reply-form(method="POST", action="#{req.rootDir}diskuto", onSubmit="return confirmReply(this)", class=comment ? "" : "snapped")
+	form.reply-form(method="POST", action="#{req.rootDir}diskuto", onSubmit="return confirmReply(this)")
 		input(type="hidden", name="topic", value=topic)
 		input(type="hidden", name="reply_to", value=comment ? comment.id : "")
 		- auto ph = comment ? trWeb("Type here to reply.") : trWeb("Type here to leave a comment.");
