@@ -1,4 +1,4 @@
-.diskuto .contents { overflow: hidden; }
+.diskuto .contents { overflow: auto; max-height: 50em; }
 .diskuto form input, .diskuto form button { transition: all 0.3s ease; }
 .diskuto form.controls-snapped input, .diskuto form.controls-snapped button, .diskuto form.snapped input, .diskuto form.snapped button { max-height: 0; opacity: 0; }
 .diskuto form.reply-form textarea { max-height: none; }
