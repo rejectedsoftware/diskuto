@@ -10,6 +10,12 @@
 	border: 1px solid #ddd;
 	box-shadow: 0 0px 5px 0 #ddd;
 }
+.diskuto pre {
+	line-height: 1.5em;
+	background-image: linear-gradient(90deg, rgba(128,128,128,0.3), rgba(128,128,128,0.3) 0.5em, rgba(128,128,128,0.05) 0.501em);
+	border: 1px solid #eee;
+	padding-left: 1em;
+}
 .diskuto input, .diskuto textarea { background: white; }
 .diskuto input, .diskuto button { transition: all 0.3s ease; }
 .diskuto button { background-color: #f0f0f0; }
@@ -41,9 +47,9 @@
 .diskuto > .reply-form { width: 100%; }
 .diskuto .reply-form { display: inline-flex; flex-basis: 100%; flex-wrap: wrap; margin: -4pt; }
 .diskuto .reply-form > * { margin: 4pt; }
-.diskuto .reply-form textarea { height: 1.5em; flex-basis: 100%; resize: none; transition: all 0.3s ease; }
+.diskuto .reply-form textarea { height: 1.5em; flex-basis: 100%; resize: none; transition: all 0.3s ease; z-index: 10; }
 .diskuto .reply-form input { flex-grow: 1; flex-basis: 0; }
-.diskuto .reply-form input, .diskuto .reply-form button { margin-top: -2em; opacity: 0; z-index: -1; }
+.diskuto .reply-form input, .diskuto .reply-form button { margin-top: -2em; opacity: 0; }
 .diskuto .comment .reply-form { margin-left: 0.5em; }
 .diskuto .comment .reply-form textarea { height: 1.5em; flex-basis: 14em; }
 .diskuto .reply-form.expanded textarea { height: 9EM; resize: vertical; flex-basis: 100%; }
