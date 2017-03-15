@@ -1,4 +1,4 @@
-module diskuto.internal.dietutils;
+module diskuto.internal.webutils;
 
 import diskuto.backend : CommentStatus, DiskutoBackend, StoredComment;
 import diskuto.web : DiskutoWeb;
@@ -41,21 +41,6 @@ struct Comment {
 		if (comment.userID == user) return true;
 		return comment.status == CommentStatus.active;
 	}
-}
-
-string createUID()
-{
-	import vibe.web.web : SessionVar;
-
-	static SessionVar!(string, SessionVars.userID) uid;
-	if (!uid.length) {
-		import std.format : format;
-		import std.random : uniform;
-		// TODO: Use a cryptographic RNG from vibe.crypto.random. Not _really_ needed, but best practice anyway.
-		uid = format("%016X%016X", uniform!ulong(), uniform!ulong());
-		import vibe.core.log; logInfo("CREATE UID %s", uid);
-	}
-	return uid;
 }
 
 auto getCommentsContext(DiskutoWeb web, string topic)

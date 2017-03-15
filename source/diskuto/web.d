@@ -42,7 +42,7 @@ DiskutoWeb registerDiskutoWeb(URLRouter router, DiskutoBackend backend)
 @path("diskuto")
 private final class DiskutoWebInterface {
 	import antispam.antispam;
-	import diskuto.internal.dietutils : SessionVars;
+	import diskuto.internal.webutils : SessionVars;
 
 	private {
 		DiskutoBackend m_backend;
@@ -254,7 +254,7 @@ private final class DiskutoWebInterface {
 
 		import std.array : appender;
 		import diet.html : compileHTMLDietFile;
-		import diskuto.internal.dietutils : Comment;
+		import diskuto.internal.webutils : Comment;
 
 		auto c = Comment(scomment, Clock.currTime(UTC()));
 		auto comment = &c;

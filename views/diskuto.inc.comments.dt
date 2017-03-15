@@ -1,5 +1,5 @@
 - import diskuto.web : DiskutoWeb;
-- import diskuto.internal.dietutils : Comment, createUID, getCommentsContext;
+- import diskuto.internal.webutils : Comment, getCommentsContext;
 - import vibe.web.web : trWeb;
 - import core.time : minutes;
 - import fuzzydate : toFuzzyDate;
