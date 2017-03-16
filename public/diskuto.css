@@ -28,12 +28,13 @@
 .diskuto .avatar { margin-right: 0.5em; margin-bottom: 0.5em; border-radius: 5px; border: 1px solid #fff; box-shadow: 0 0 5px 0 #aaa; width: 48px; height: 48px; }
 .diskuto .comment .comment .avatar { width: 42px; height: 42px; }
 .diskuto .right { flex-grow: 1; flex-basis: 0; }
-.diskuto .author, .diskuto .date { font-size: 80%; }
+.diskuto .author, .diskuto .date, .diskuto .comment-status { font-size: 80%; }
 .diskuto .author { color: #fa4; font-weight: bold; }
 .diskuto a.author:hover { color: #fa4; font-weight: bold; text-decoration: underline; }
 .diskuto .date { text-decoration: none; color: #aaa; }
-.diskuto .date:before { color: #fa4; font-weight: bold; content: "•"; padding: 0 0.3em; color: #aaa; }
+.diskuto .date:before, .diskuto .comment-status:before { color: #fa4; font-weight: bold; content: "•"; padding: 0 0.4em; color: #aaa; }
 .diskuto .date:hover:after { content: "⚓"; margin-left: 0.25em; }
+.diskuto .comment-status { display: inline-block; color: red; }
 .diskuto .contents { overflow: auto; max-height: 50em; }
 .diskuto .error { color: red; }
 .diskuto .action-bar { display: flex; flex-wrap: nowrap; align-items: flex-start; flex-basis: 100%; flex-shrink: 0; }

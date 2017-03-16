@@ -19,6 +19,7 @@
 - void renderCommentRec(string topic, DiskutoWeb web, ref User usr, Comment* comment)
 	.comment(id=comment.id)
 		- import diskuto.avatar : generateAvatar;
+		- import diskuto.backend : CommentStatus;
 		- import std.algorithm.searching : canFind;
 
 		- generateAvatar(&_diet_output, comment.avatarID);
@@ -30,6 +31,21 @@
 			- else
 				span.author& Anonymous
 			a.date(href="\##{comment.id}", title=comment.time)= toFuzzyDate(comment.time)
+
+			- final switch (comment.status)
+				- case CommentStatus.active: break;
+				- case CommentStatus.disabled:
+					.comment-status& This comment has been deactivated
+					- break;
+				- case CommentStatus.awaitsModeration:
+					.comment-status& This comment is still waiting for a moderator to be approved
+					- break;
+				- case CommentStatus.spam:
+					.comment-status& This comment has been flagged as spam
+					- break;
+				- case CommentStatus.deleted:
+					.comment-status& This comment has been deleted
+					- break;
 
 			include diskuto.inc.commentContents
 
