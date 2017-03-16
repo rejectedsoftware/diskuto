@@ -3,6 +3,7 @@ module diskuto.web;
 import diskuto.backend : CommentStatus, DiskutoBackend, StoredComment;
 import diskuto.userstore : DiskutoUserStore, StoredUser;
 import diskuto.settings : DiskutoSettings;
+import diskuto.internal.webutils : SessionVars, User;
 
 import vibe.http.router : URLRouter;
 import vibe.http.fileserver : HTTPFileServerSettings, serveStaticFiles;
@@ -56,6 +57,19 @@ struct DiskutoWeb {
 		return m_web.m_settings;
 	}
 
+	void setupRequest(HTTPServerRequest req, HTTPServerResponse res)
+	{
+		if (!req.session)
+			req.session = res.startSession();
+
+		if (!req.session.get(SessionVars.userID, "").length) {
+			import std.format : format;
+			import std.random : uniform;
+			// TODO: Use a cryptographic RNG from vibe.crypto.random. Not _really_ needed, but best practice anyway.
+			req.session.set(SessionVars.userID, format("%016X%016X", uniform!ulong(), uniform!ulong()));
+		}
+	}
+
 	void setupRequest()
 	{
 		if (!m_web.m_userID.length) {
@@ -77,7 +91,7 @@ struct DiskutoWeb {
 
 private final class DiskutoWebInterface {
 	import antispam.antispam;
-	import diskuto.internal.webutils : SessionVars, User;
+	import diskuto.internal.webutils : User;
 
 	private {
 		DiskutoSettings m_settings;
@@ -96,7 +110,7 @@ private final class DiskutoWebInterface {
 
 		m_settings = settings;
 		m_antispam = new AntispamState;
-		m_antispam.loadConfig(parseJsonString(readFileUTF8("antispam.json")));
+		m_antispam.loadConfig(settings.antispam);
 	}
 
 	@errorDisplay!sendWebError
@@ -258,9 +272,11 @@ private final class DiskutoWebInterface {
 			enforce(url.schema.among("http", "https"), "Only http:// and https:// are allowed as website address.");
 		}
 
-		m_sessionName = name;
-		m_sessionEmail = email;
-		m_sessionWebsite = website;
+		if (!user.registered) {
+			m_sessionName = name;
+			m_sessionEmail = email;
+			m_sessionWebsite = website;
+		}
 
 		StoredComment comment;
 		comment.author = user.id;
