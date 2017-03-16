@@ -280,6 +280,9 @@ private final class DiskutoWebInterface {
 
 		StoredComment comment;
 		comment.author = user.id;
+		comment.clientAddress = req.peer;
+		if (auto pp = "X-Forwarded-For" in req.headers)
+			comment.clientAddress = (*pp) ~ ',' ~ comment.clientAddress;
 		comment.topic = topic;
 		comment.replyTo = reply_to;
 		comment.name = name;
@@ -291,7 +294,7 @@ private final class DiskutoWebInterface {
 
 		bool is_spam_async = false;
 
-		checkSpamState(req, name, email, website, text, {
+		checkSpamState(req, comment, {
 			if (comment.id.length)
 				m_settings.backend.setCommentStatus(comment.id, CommentStatus.spam);
 			is_spam_async = true;
@@ -366,7 +369,7 @@ private final class DiskutoWebInterface {
 		return dst.data;
 	}
 
-	private void checkSpamState(HTTPServerRequest req, string name, string email, string website, string text, void delegate() @safe revoke)
+	private void checkSpamState(HTTPServerRequest req, StoredComment comment, void delegate() @safe revoke)
 	{
 		import std.algorithm.comparison : among;
 		import std.algorithm.iteration : map, splitter;
@@ -374,13 +377,10 @@ private final class DiskutoWebInterface {
 		import std.string : strip;
 
 		AntispamMessage msg;
-		msg.headers["From"] = name.length ? email.length ? name ~ " <" ~ email ~ ">" : name : email;
-		msg.headers["Subject"] = website; // TODO: maybe use a different header
-		msg.message = cast(const(ubyte)[])text;
-
-		if( auto pp = "X-Forwarded-For" in req.headers )
-			msg.peerAddress = (*pp).splitter(',').map!strip.array ~ req.peer;
-		else msg.peerAddress = [req.peer];
+		msg.headers["From"] = comment.name.length ? comment.email.length ? comment.name ~ " <" ~ comment.email ~ ">" : comment.name : comment.email;
+		msg.headers["Subject"] = comment.website; // TODO: maybe use a different header
+		msg.message = cast(const(ubyte)[])comment.text;
+		msg.peerAddress = comment.clientAddress.splitter(',').map!strip.array;
 
 		m_antispam.filterMessage!(
 			(status) {

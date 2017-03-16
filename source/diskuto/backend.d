@@ -3,7 +3,7 @@ module diskuto.backend;
 import diskuto.userstore;
 
 import std.datetime : SysTime;
-import vibe.data.serialization : byName;
+import vibe.data.serialization : byName, optional;
 
 interface DiskutoBackend {
 @safe:
@@ -32,6 +32,7 @@ struct StoredComment {
 	string email;
 	string website;
 	string text;
+	@optional string moderatorComment;
 	SysTime time;
 	UserID[] upvotes;
 	UserID[] downvotes;
