@@ -49,7 +49,7 @@ struct User {
 	StoredUser user;
 	alias user this;
 	bool registered;
-	StoredUser.Role role;
+	StoredUser.Role role = StoredUser.Role.member;
 	@property bool isModerator() const { return role == StoredUser.Role.moderator; }
 }
 
@@ -131,8 +131,8 @@ auto getCommentsContext(HTTPServerRequest req, DiskutoWeb web, string topic)
 		if (!u.isNull) {
 			ret.user = u;
 			ret.user.registered = true;
-			ret.user.role = web.settings.userStore.getUserRole(u.id, topic);
 		}
+		ret.user.role = web.settings.userStore.getUserRole(ret.user.id, topic);
 	}
 
 	return ret;
