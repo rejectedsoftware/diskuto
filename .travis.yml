@@ -1,2 +1,8 @@
 language: d
 sudo: false
+
+script:
+  - dub test
+  - dub build --root=examples/embed-diet
+  - dub build --root=examples/embed-raw
+  - dub build --root=examples/embed-js
