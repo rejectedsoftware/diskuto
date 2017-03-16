@@ -35,6 +35,7 @@ void main()
 {
 	auto dsettings = new DiskutoSettings;
 	dsettings.backend = new MongoDBBackend("mongodb://127.0.0.1/diskuto");
+	dsettings.antispam = parseJsonString(readFileUTF8("antispam.json"));
 	dsettings.resourcePath = "../../public";
 
 	auto router = new URLRouter;
