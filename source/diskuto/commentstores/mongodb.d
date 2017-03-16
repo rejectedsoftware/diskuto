@@ -1,6 +1,6 @@
-module diskuto.backends.mongodb;
+module diskuto.commentstores.mongodb;
 
-import diskuto.backend;
+import diskuto.commentstore;
 import vibe.data.bson;
 import vibe.db.mongo.mongo;
 import vibe.inet.url;

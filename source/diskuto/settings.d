@@ -1,6 +1,6 @@
 module diskuto.settings;
 
-import diskuto.backend : DiskutoCommentStore;
+import diskuto.commentstore : DiskutoCommentStore;
 import diskuto.userstore : DiskutoUserStore;
 import vibe.data.json : Json;
 import core.time : Duration, minutes;

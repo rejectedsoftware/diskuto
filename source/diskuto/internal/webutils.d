@@ -1,6 +1,6 @@
 module diskuto.internal.webutils;
 
-import diskuto.backend : CommentStatus, DiskutoCommentStore, StoredComment;
+import diskuto.commentstore : DiskutoCommentStore, StoredComment;
 import diskuto.userstore : StoredUser;
 import diskuto.web : DiskutoWeb;
 import vibe.http.server : HTTPServerRequest;
@@ -39,9 +39,9 @@ struct Comment {
 	bool isVisibleTo(StoredComment.UserID user)
 	{
 		//if (isModerator(user)) return true;
-		if (comment.status == CommentStatus.deleted) return false;
+		if (comment.status == StoredComment.Status.deleted) return false;
 		if (comment.author == user) return true;
-		return comment.status == CommentStatus.active;
+		return comment.status == StoredComment.Status.active;
 	}
 }
 
@@ -56,7 +56,7 @@ struct User {
 
 auto getCommentsContext(HTTPServerRequest req, DiskutoWeb web, string topic)
 {
-	import diskuto.backend : StoredComment;
+	import diskuto.commentstore : StoredComment;
 	import std.datetime : Clock, UTC;
 	import std.algorithm.searching : count;
 	import std.algorithm.sorting : sort;
@@ -76,7 +76,7 @@ auto getCommentsContext(HTTPServerRequest req, DiskutoWeb web, string topic)
 		auto dbcomments = backend.getCommentsForTopic(topic);
 		auto comments = new Comment[](dbcomments.length);
 		size_t curidx;
-		ret.commentCount = dbcomments.count!(c => c.status == CommentStatus.active);
+		ret.commentCount = dbcomments.count!(c => c.status == StoredComment.Status.active);
 		size_t[StoredComment.ID] map;
 		foreach (c; dbcomments) {
 			auto idx = curidx++;
@@ -104,7 +104,7 @@ auto getCommentsContext(HTTPServerRequest req, DiskutoWeb web, string topic)
 			if (score < 1.0) score += 0.5 / (c.age.total!"seconds" / (60.0 * 60));
 			else score += 0.5 / (c.age.total!"seconds" / (2.0 * 60 * 60));
 
-			if (!c.status.among(CommentStatus.active, CommentStatus.awaitsModeration))
+			if (!c.status.among(StoredComment.Status.active, StoredComment.Status.awaitsModeration))
 				score -= 1000;
 
 			return score;

@@ -1,4 +1,4 @@
-module diskuto.backend;
+module diskuto.commentstore;
 
 import diskuto.userstore;
 

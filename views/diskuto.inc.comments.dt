@@ -19,7 +19,7 @@
 - void renderCommentRec(string topic, DiskutoWeb web, ref User usr, Comment* comment)
 	.comment(id=comment.id)
 		- import diskuto.avatar : generateAvatar;
-		- import diskuto.backend : CommentStatus;
+		- import diskuto.commentstore : StoredComment;
 		- import std.algorithm.searching : canFind;
 
 		- generateAvatar(&_diet_output, comment.avatarID);
@@ -32,18 +32,18 @@
 				span.author& Anonymous
 			a.date(href="\##{comment.id}", title=comment.time)= toFuzzyDate(comment.time)
 
-			- final switch (comment.status)
-				- case CommentStatus.active: break;
-				- case CommentStatus.disabled:
+			- final switch (comment.status) with (StoredComment)
+				- case Status.active: break;
+				- case Status.disabled:
 					.comment-status& This comment has been deactivated
 					- break;
-				- case CommentStatus.awaitsModeration:
+				- case Status.awaitsModeration:
 					.comment-status& This comment is still waiting for a moderator to be approved
 					- break;
-				- case CommentStatus.spam:
+				- case Status.spam:
 					.comment-status& This comment has been flagged as spam
 					- break;
-				- case CommentStatus.deleted:
+				- case Status.deleted:
 					.comment-status& This comment has been deleted
 					- break;
 
@@ -82,7 +82,7 @@
 				button.delete-button(type="button", onClick="showDelete(this)")& Delete
 
 			- if (usr.isModerator)
-				- if (comment.status == CommentStatus.active)
+				- if (comment.status == StoredComment.Status.active)
 					button(type="button", onClick="setStatus(this, 'spam')")& Spam
 					button(type="button", onClick="setStatus(this, 'disabled')")& Deactivate
 				- else

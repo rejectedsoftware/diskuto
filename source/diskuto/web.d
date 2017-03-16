@@ -1,6 +1,6 @@
 module diskuto.web;
 
-import diskuto.backend : DiskutoCommentStore, StoredComment;
+import diskuto.commentstore : DiskutoCommentStore, StoredComment;
 import diskuto.userstore : DiskutoUserStore, StoredUser;
 import diskuto.settings : DiskutoSettings;
 import diskuto.internal.webutils : SessionVars, User;

@@ -6,8 +6,8 @@ import vibe.http.server : HTTPServerRequest, HTTPServerSettings, listenHTTP;
 import vibe.http.session : MemorySessionStore;
 import vibe.web.web : errorDisplay, registerWebInterface, redirect, render, SessionVar;
 import diskuto.web : registerDiskutoWeb, DiskutoWeb;
-import diskuto.backend : DiskutoCommentStore;
-import diskuto.backends.mongodb : MongoDBCommentStore;
+import diskuto.commentstore : DiskutoCommentStore;
+import diskuto.commentstores.mongodb : MongoDBCommentStore;
 import diskuto.userstore : DiskutoUserStore, StoredUser;
 import diskuto.settings : DiskutoSettings;
 
