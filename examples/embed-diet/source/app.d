@@ -6,8 +6,8 @@ import vibe.http.server : HTTPServerRequest, HTTPServerSettings, listenHTTP;
 import vibe.http.session : MemorySessionStore;
 import vibe.web.web : errorDisplay, registerWebInterface, redirect, render, SessionVar;
 import diskuto.web : registerDiskutoWeb, DiskutoWeb;
-import diskuto.backend : DiskutoBackend;
-import diskuto.backends.mongodb : MongoDBBackend;
+import diskuto.backend : DiskutoCommentStore;
+import diskuto.backends.mongodb : MongoDBCommentStore;
 import diskuto.userstore : DiskutoUserStore, StoredUser;
 import diskuto.settings : DiskutoSettings;
 
@@ -20,8 +20,8 @@ final class ExampleUserStore : DiskutoUserStore {
 
 	this()
 	{
-		users ~= StoredUser("example-1", "John Doe", "john@doe.com", "http://johndoe.com", false);
-		users ~= StoredUser("example-2", "Admin", "admin@example.com", "", true);
+		users ~= StoredUser("example-1", "John Doe", "john@doe.com", "http://johndoe.com");
+		users ~= StoredUser("example-2", "Admin", "admin@example.com", "");
 	}
 
 	Nullable!StoredUser getLoggedInUser(HTTPServerRequest req)
@@ -44,6 +44,11 @@ final class ExampleUserStore : DiskutoUserStore {
 		if (idx >= 0)
 			ret = users[idx];
 		return ret;
+	}
+
+	StoredUser.Role getUserRole(StoredUser.ID user, string topic)
+	{
+		return user == "example-2" ? StoredUser.Role.moderator : StoredUser.Role.member;
 	}
 }
 
@@ -86,7 +91,7 @@ final class WebFrontend {
 void main()
 {
 	auto dsettings = new DiskutoSettings;
-	dsettings.backend = new MongoDBBackend("mongodb://127.0.0.1/diskuto");
+	dsettings.commentStore = new MongoDBCommentStore("mongodb://127.0.0.1/diskuto");
 	dsettings.userStore = new ExampleUserStore;
 	dsettings.antispam = parseJsonString(`[{"filter": "blacklist", "settings": {"words": ["sex", "drugs", "rock", "roll"]}}]`);
 	dsettings.resourcePath = "../../public";

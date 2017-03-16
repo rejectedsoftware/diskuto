@@ -10,7 +10,7 @@ import std.array : array;
 import std.exception : enforce;
 
 
-class MongoDBBackend : DiskutoBackend {
+class MongoDBCommentStore : DiskutoCommentStore {
 @trusted: // FIXME! vibe.d < 0.8.0 is not annotated with @safe
 	private {
 		MongoCollection m_comments;
@@ -92,6 +92,8 @@ class MongoDBBackend : DiskutoBackend {
 		return m_comments.find!(MongoStruct!StoredComment)().sort(["time": -1]).limit(100).map!(c => cast(StoredComment)c).array;
 	}
 }
+
+deprecated alias MongoDBBackend = MongoDBCommentStore;
 
 // Converts a string "id" field to a BsonObjectID "_id" field for storage in a MongoDB collection
 struct MongoStruct(T) {

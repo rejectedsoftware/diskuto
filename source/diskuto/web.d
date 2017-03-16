@@ -1,6 +1,6 @@
 module diskuto.web;
 
-import diskuto.backend : CommentStatus, DiskutoBackend, StoredComment;
+import diskuto.backend : DiskutoCommentStore, StoredComment;
 import diskuto.userstore : DiskutoUserStore, StoredUser;
 import diskuto.settings : DiskutoSettings;
 import diskuto.internal.webutils : SessionVars, User;
@@ -14,10 +14,10 @@ import std.exception : enforce;
 import std.typecons : Nullable;
 
 
-DiskutoWeb registerDiskutoWeb(URLRouter router, DiskutoBackend backend)
+DiskutoWeb registerDiskutoWeb(URLRouter router, DiskutoCommentStore comment_store)
 {
 	auto settings = new DiskutoSettings;
-	settings.backend = backend;
+	settings.commentStore = comment_store;
 	return registerDiskutoWeb(router, settings);
 }
 
@@ -39,7 +39,7 @@ DiskutoWeb registerDiskutoWeb(URLRouter router, DiskutoSettings settings)
 struct DiskutoWeb {
 	private DiskutoWebInterface m_web;
 
-	package @property DiskutoBackend backend() { return m_web.m_settings.backend; }
+	package @property DiskutoCommentStore commentStore() { return m_web.m_settings.commentStore; }
 
 	string getBasePath(string root_path = "/")
 	{
@@ -116,23 +116,25 @@ private final class DiskutoWebInterface {
 	@errorDisplay!sendWebError
 	void post(HTTPServerRequest req, string name, string email, string website, string topic, string reply_to, string text)
 	{
-		doPost(req, getUser(req), name, email, website, topic, reply_to, text);
+		doPost(req, getUser(req, topic), name, email, website, topic, reply_to, text);
 		redirectBack(req);
 	}
 
 	@errorDisplay!sendWebError
 	void up(HTTPServerRequest req, string id)
 	{
-		auto usr = getUser(req);
-		m_settings.backend.upvote(id, usr.id);
+		auto topic = m_settings.commentStore.getComment(id).topic; // TODO: be more efficient here!
+		auto usr = getUser(req, topic);
+		m_settings.commentStore.upvote(id, usr.id);
 		redirectBack(req);
 	}
 
 	@errorDisplay!sendWebError
 	void down(HTTPServerRequest req, string id)
 	{
-		auto usr = getUser(req);
-		m_settings.backend.downvote(id, usr.id);
+		auto topic = m_settings.commentStore.getComment(id).topic; // TODO: be more efficient here!
+		auto usr = getUser(req, topic);
+		m_settings.commentStore.downvote(id, usr.id);
 		redirectBack(req);
 	}
 
@@ -148,7 +150,7 @@ private final class DiskutoWebInterface {
 	void postPost(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto data = req.json;
-		auto comment = doPost(req, getUser(req),
+		auto comment = doPost(req, getUser(req, data["topic"].get!string),
 			data["name"].get!string,
 			data["email"].get!string,
 			data["website"].get!string,
@@ -170,12 +172,16 @@ private final class DiskutoWebInterface {
 	@errorDisplay!sendJsonError
 	void edit(HTTPServerRequest req, HTTPServerResponse res)
 	{
-		auto usr = getUser(req);
 		auto data = req.json;
+		auto id = data["id"].get!string;
+		auto text = data["text"].get!string;
+		auto comment = m_settings.commentStore.getComment(id);
+		auto usr = getUser(req, comment.topic);
 
-		enforceAuthorizedToEdit(req, data["id"].get!string, usr);
+		enforceAuthorizedToEdit(req, comment, usr);
+		enforce(text.length < 4096, "Message text is too long.");
 
-		m_settings.backend.editComment(data["id"].get!string, data["text"].get!string);
+		m_settings.commentStore.editComment(id, text);
 
 		static struct Reply {
 			bool success = true;
@@ -183,19 +189,21 @@ private final class DiskutoWebInterface {
 		}
 
 		Reply reply;
-		reply.rendered = renderCommentContents(data["text"].get!string);
+		reply.rendered = renderCommentContents(text);
 		res.writeJsonBody(reply);
 	}
 
 	@errorDisplay!sendJsonError
 	void postDelete(HTTPServerRequest req, HTTPServerResponse res)
 	{
-		auto usr = getUser(req);
 		auto data = req.json;
+		auto id = data["id"].get!string;
+		auto comment = m_settings.commentStore.getComment(id);
+		auto usr = getUser(req, comment.topic);
 
-		enforceAuthorizedToEdit(req, data["id"].get!string, usr);
+		enforceAuthorizedToEdit(req, comment, usr);
 
-		m_settings.backend.setCommentStatus(data["id"].get!string, CommentStatus.deleted);
+		m_settings.commentStore.setCommentStatus(id, StoredComment.Status.deleted);
 
 		static struct Reply { bool success = true; }
 		res.writeJsonBody(Reply.init);
@@ -206,12 +214,14 @@ private final class DiskutoWebInterface {
 	{
 		import std.conv : to;
 
-		auto usr = getUser(req);
 		auto data = req.json;
-
+		auto id = data["id"].get!string;
+		auto status = data["status"].get!string.to!(StoredComment.Status);
+		auto topic = m_settings.commentStore.getComment(id).topic; // TODO: be more efficient here!
+		auto usr = getUser(req, topic);
 		enforce(usr.isModerator, "Only moderators can change the comment status.");
 
-		m_settings.backend.setCommentStatus(data["id"].get!string, data["status"].get!string.to!CommentStatus);
+		m_settings.commentStore.setCommentStatus(id, status);
 
 		static struct Reply { bool success = true; }
 		res.writeJsonBody(Reply.init);
@@ -220,12 +230,15 @@ private final class DiskutoWebInterface {
 	@errorDisplay!sendJsonError
 	void vote(HTTPServerRequest req, HTTPServerResponse res)
 	{
-		auto usr = getUser(req);
 		auto cmd = req.json;
 		auto dir = cmd["dir"].get!int;
 		auto id = cmd["id"].get!string;
-		if (dir > 0) m_settings.backend.upvote(id, usr.id);
-		else if (dir < 0) m_settings.backend.downvote(id, usr.id);
+		auto topic = m_settings.commentStore.getComment(id).topic; // TODO: be more efficient here!
+		auto usr = getUser(req, topic);
+		enforce(usr.role >= StoredUser.Role.member, "Not allowed to vote!");
+
+		if (dir > 0) m_settings.commentStore.upvote(id, usr.id);
+		else if (dir < 0) m_settings.commentStore.downvote(id, usr.id);
 		res.writeJsonBody(["success": true]);
 	}
 
@@ -233,14 +246,14 @@ private final class DiskutoWebInterface {
 	void getTopic(HTTPServerResponse res, string topic)
 	{
 		static struct S { bool success; StoredComment[] comments; }
-		res.writeJsonBody(S(true, m_settings.backend.getCommentsForTopic(topic)));
+		res.writeJsonBody(S(true, m_settings.commentStore.getCommentsForTopic(topic)));
 	}
 
 	@errorDisplay!sendJsonError
 	void getLatestComments(HTTPServerResponse res)
 	{
 		static struct S { bool success; StoredComment[] comments; }
-		res.writeJsonBody(S(true, m_settings.backend.getLatestComments()));
+		res.writeJsonBody(S(true, m_settings.commentStore.getLatestComments()));
 	}
 
 	@noRoute
@@ -306,20 +319,20 @@ private final class DiskutoWebInterface {
 		comment.website = website;
 		comment.text = text;
 		comment.time = Clock.currTime(UTC());
-		comment.id = m_settings.backend.postComment(comment);
+		comment.id = m_settings.commentStore.postComment(comment);
 
 		bool is_spam_async = false;
 
 		checkSpamState(req, comment, {
 			if (comment.id.length)
-				m_settings.backend.setCommentStatus(comment.id, CommentStatus.spam);
+				m_settings.commentStore.setCommentStatus(comment.id, StoredComment.Status.spam);
 			is_spam_async = true;
 		});
 
 		m_sessionLastPost = comment.id;
 
 		if (is_spam_async)
-			m_settings.backend.setCommentStatus(comment.id, CommentStatus.spam);
+			m_settings.commentStore.setCommentStatus(comment.id, StoredComment.Status.spam);
 		return comment;
 	}
 
@@ -337,18 +350,24 @@ private final class DiskutoWebInterface {
 		redirect(url);
 	}
 
-	private User getUser(HTTPServerRequest req)
+	private User getUser(HTTPServerRequest req, string topic)
 	{
+		User ret;
+
 		if (m_settings.userStore) {
 			auto usr = m_settings.userStore.getLoggedInUser(req);
-			if (!usr.isNull)
-				return User(usr, true);
+			if (!usr.isNull) {
+				ret.user = usr;
+				ret.registered = true;
+				ret.role = m_settings.userStore.getUserRole(usr.id, topic);
+				return ret;
+			}
 		}
 
 		enforce(m_userID.length, "Unauthorized request. Please make sure that your browser supports cookies.");
-		User ret;
-		ret.registered = false;
 		ret.id = m_userID;
+		ret.registered = false;
+		ret.role = m_settings.userStore ? m_settings.userStore.getUserRole(ret.id, topic) : StoredUser.Role.member;
 		ret.name = m_sessionName;
 		ret.email = m_sessionEmail;
 		ret.website = m_sessionWebsite;
@@ -410,16 +429,22 @@ private final class DiskutoWebInterface {
 		)(msg);
 	}
 
-	private void enforceAuthorizedToEdit(HTTPServerRequest req, StoredComment.ID comment, in ref StoredUser user)
+	private void enforceAuthorizedToEdit(HTTPServerRequest req, StoredComment comment, in ref StoredUser user)
 	{
 		import std.datetime : Clock, UTC;
 		import core.time : minutes;
 
-		if (!user.isModerator) {
-			auto c = m_settings.backend.getComment(comment);
-			auto now = Clock.currTime(UTC());
-			enforce(c.author == user.id, "Not allowed to modify comment.");
-			enforce(now - c.time < m_settings.hardEditTimeLimit, "Comment cannot be modified anymore.");
+		auto role = m_settings.userStore ? m_settings.userStore.getUserRole(user.id, comment.topic) : StoredUser.Role.member;
+		final switch (role) with (StoredUser) {
+			case Role.none, Role.reader:
+				throw new Exception("You are not allowed to modify comments.");
+			case Role.moderator:
+				break;
+			case Role.commenter, Role.member:
+				auto now = Clock.currTime(UTC());
+				enforce(comment.author == user.id, "Not allowed to modify comment.");
+				enforce(now - comment.time < m_settings.hardEditTimeLimit, "Comment cannot be modified anymore.");
+				break;
 		}
 	}
 }

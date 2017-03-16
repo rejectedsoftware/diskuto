@@ -5,11 +5,11 @@ import diskuto.userstore;
 import std.datetime : SysTime;
 import vibe.data.serialization : byName, optional;
 
-interface DiskutoBackend {
+interface DiskutoCommentStore {
 @safe:
 	StoredComment.ID postComment(StoredComment comment);
 	StoredComment getComment(StoredComment.ID comment);
-	void setCommentStatus(StoredComment.ID id, CommentStatus status);
+	void setCommentStatus(StoredComment.ID id, StoredComment.Status status);
 	void editComment(StoredComment.ID id, string new_text);
 	void deleteComment(StoredComment.ID id);
 	void upvote(StoredComment.ID id, StoredComment.UserID user);
@@ -19,9 +19,20 @@ interface DiskutoBackend {
 	StoredComment[] getLatestComments();
 }
 
+deprecated("Use DiskutoCommentStore instead.") alias DiskutoBackend = DiskutoCommentStore;
+
 struct StoredComment {
 	alias ID = string;
 	alias UserID = StoredUser.ID;
+
+	enum Status {
+		active,
+		disabled,
+		awaitsModeration,
+		spam,
+		deleted
+	}
+
 	ID id;
 	@byName CommentStatus status = CommentStatus.active;
 	string topic;
@@ -38,10 +49,5 @@ struct StoredComment {
 	UserID[] downvotes;
 }
 
-enum CommentStatus {
-	active,
-	disabled,
-	awaitsModeration,
-	spam,
-	deleted
-}
+deprecated("Use StoredComment.Status instead.")
+alias CommentStatus = StoredComment.Status;;

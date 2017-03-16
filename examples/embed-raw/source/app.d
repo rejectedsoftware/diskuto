@@ -6,8 +6,8 @@ import vibe.http.server : HTTPServerRequest, HTTPServerResponse, HTTPServerSetti
 import vibe.http.session : MemorySessionStore;
 import vibe.web.web : errorDisplay, registerWebInterface, redirect, render, SessionVar;
 import diskuto.web : registerDiskutoWeb, DiskutoWeb;
-import diskuto.backend : DiskutoBackend;
-import diskuto.backends.mongodb : MongoDBBackend;
+import diskuto.backend : DiskutoCommentStore;
+import diskuto.backends.mongodb : MongoDBCommentStore;
 import diskuto.userstore : DiskutoUserStore, StoredUser;
 import diskuto.settings : DiskutoSettings;
 
@@ -43,7 +43,7 @@ final class WebFrontend {
 void main()
 {
 	auto dsettings = new DiskutoSettings;
-	dsettings.backend = new MongoDBBackend("mongodb://127.0.0.1/diskuto");
+	dsettings.commentStore = new MongoDBCommentStore("mongodb://127.0.0.1/diskuto");
 	dsettings.antispam = parseJsonString(`[{"filter": "blacklist", "settings": {"words": ["sex", "drugs", "rock", "roll"]}}]`);
 	dsettings.resourcePath = "../../public/";
 

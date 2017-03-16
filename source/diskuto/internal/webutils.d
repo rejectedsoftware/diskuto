@@ -1,6 +1,6 @@
 module diskuto.internal.webutils;
 
-import diskuto.backend : CommentStatus, DiskutoBackend, StoredComment;
+import diskuto.backend : CommentStatus, DiskutoCommentStore, StoredComment;
 import diskuto.userstore : StoredUser;
 import diskuto.web : DiskutoWeb;
 import vibe.http.server : HTTPServerRequest;
@@ -49,6 +49,8 @@ struct User {
 	StoredUser user;
 	alias user this;
 	bool registered;
+	StoredUser.Role role;
+	@property bool isModerator() const { return role == StoredUser.Role.moderator; }
 }
 
 
@@ -59,7 +61,7 @@ auto getCommentsContext(HTTPServerRequest req, DiskutoWeb web, string topic)
 	import std.algorithm.searching : count;
 	import std.algorithm.sorting : sort;
 
-	auto backend = web.backend;
+	auto backend = web.commentStore;
 
 	static struct Info {
 		size_t commentCount;
@@ -92,7 +94,7 @@ auto getCommentsContext(HTTPServerRequest req, DiskutoWeb web, string topic)
 
 		static double getScore(Comment* c) {
 			import std.algorithm.comparison : among;
-			
+
 			// basic sortig based on the ratio of up and downvotes
 			double score = (c.upvotes.length + 1.0) / (c.downvotes.length + 1.0);
 
@@ -129,6 +131,7 @@ auto getCommentsContext(HTTPServerRequest req, DiskutoWeb web, string topic)
 		if (!u.isNull) {
 			ret.user = u;
 			ret.user.registered = true;
+			ret.user.role = web.settings.userStore.getUserRole(u.id, topic);
 		}
 	}
 
