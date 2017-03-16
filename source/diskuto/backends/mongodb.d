@@ -49,7 +49,7 @@ class MongoDBBackend : DiskutoBackend {
 	void setCommentStatus(StoredComment.ID id, CommentStatus status)
 	{
 		import std.conv : to;
-		m_comments.update(["_id": BsonObjectID.fromString(id)], ["$set": ["status", status.to!string]]);
+		m_comments.update(["_id": BsonObjectID.fromString(id)], ["$set": ["status": status.to!string]]);
 	}
 
 	void editComment(StoredComment.ID id, string new_text)

@@ -195,7 +195,7 @@ private final class DiskutoWebInterface {
 
 		enforceAuthorizedToEdit(req, data["id"].get!string, usr);
 
-		m_settings.backend.deleteComment(data["id"].get!string);
+		m_settings.backend.setCommentStatus(data["id"].get!string, CommentStatus.deleted);
 
 		static struct Reply { bool success = true; }
 		res.writeJsonBody(Reply.init);
