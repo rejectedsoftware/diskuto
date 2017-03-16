@@ -91,7 +91,7 @@ void main()
 	auto router = new URLRouter;
 	auto diskutoweb = router.registerDiskutoWeb(dsettings);
 	router.registerWebInterface(new WebFrontend(diskutoweb, dsettings));
-	router.get("*", serveStaticFiles("../public/"));
+	router.get("*", serveStaticFiles("../../public/"));
 
 	auto settings = new HTTPServerSettings;
 	settings.bindAddresses = ["0.0.0.0"];
