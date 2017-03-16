@@ -1,3 +1,25 @@
+function embedDiskuto()
+{
+	for (dok of document.getElementsByClassName("diskuto")) {
+		var topic = dok.getAttribute("diskuto:topic");
+		var base = dok.getAttribute("diskuto:base");
+
+		var http = new XMLHttpRequest();
+		http.open("GET", base + "/render_topic?base="+encodeURIComponent(base)+"&topic="+encodeURIComponent(topic), true);
+		http.onerror = function() { dok.innerHTML = '<div class="error">Error performing request to load Diskuto comments.</div>'; }
+		http.onload = function() {
+			if (this.status < 400) {
+				var tmp = document.createElement('div');
+				tmp.innerHTML = this.responseText;
+				dok.innerHTML = tmp.firstElementChild.innerHTML;
+			} else {
+				dok.innerHTML = '<div class="error">Error loading Diskuto comments.</div>';
+			}
+		}
+		http.send();
+	}
+}
+
 function updateFormSnap(self)
 {
 	var form = getClassAncestor(self, "reply-form");

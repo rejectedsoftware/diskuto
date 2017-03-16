@@ -1,0 +1,35 @@
+html
+	head
+		title Diskuto Example
+		style.
+			body {
+				font-family: "Segoe UI", "Helvetica Neue", "Roboto Sans", "Open Sans", "Helvetica", sans-serif;
+				color: #222;
+			}
+			body.dark {
+				font-family: serif;
+				background-color: #444;
+				color: #fff;
+			}
+			#center-content {
+				margin: 0 auto;
+				max-width: 600pt;
+				padding: 2em;
+				box-shadow: 0 0 50px 0 #bbb;
+			}
+	body
+		#center-content
+			h1 Diskuto Example
+
+			p This is an example page with a comment section. The comment section inherits the font of the surrounding page.
+
+			a(href="#", onClick="document.body.classList.toggle('dark')") Toggle theme
+
+			// Embed Diskuto:
+			.diskuto(diskuto:topic="example", diskuto:base="#{req.rootDir}diskuto")
+			script(src="#{req.rootDir}diskuto/diskuto.js")
+			script embedDiskuto();
+			noscript You need to enable JavaScript to use the comment section.
+			// End of embedding code
+
+			p This is a page footer.
