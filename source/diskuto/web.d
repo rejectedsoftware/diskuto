@@ -202,6 +202,22 @@ private final class DiskutoWebInterface {
 	}
 
 	@errorDisplay!sendJsonError
+	void postSetStatus(HTTPServerRequest req, HTTPServerResponse res)
+	{
+		import std.conv : to;
+
+		auto usr = getUser(req);
+		auto data = req.json;
+
+		enforce(usr.isModerator, "Only moderators can change the comment status.");
+
+		m_settings.backend.setCommentStatus(data["id"].get!string, data["status"].get!string.to!CommentStatus);
+
+		static struct Reply { bool success = true; }
+		res.writeJsonBody(Reply.init);
+	}
+
+	@errorDisplay!sendJsonError
 	void vote(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto usr = getUser(req);

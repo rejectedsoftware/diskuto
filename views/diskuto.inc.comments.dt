@@ -81,6 +81,13 @@
 				button.edit-button(type="button", onClick="showEdit(this)")& Edit
 				button.delete-button(type="button", onClick="showDelete(this)")& Delete
 
+			- if (usr.isModerator)
+				- if (comment.status == CommentStatus.active)
+					button(type="button", onClick="setStatus(this, 'spam')")& Spam
+					button(type="button", onClick="setStatus(this, 'disabled')")& Deactivate
+				- else
+					button(type="button", onClick="setStatus(this, 'active')")& Activate
+
 			- commentForm(topic, usr, comment);
 
 		.replies

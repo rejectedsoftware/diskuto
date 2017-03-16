@@ -187,6 +187,44 @@ function confirmDelete(self)
 	return false;
 }
 
+function setStatus(self, status)
+{
+	var ctx = getContext(self);
+	var http = new XMLHttpRequest();
+	http.open("POST", ctx.baseURL + "/set_status", true);
+	http.setRequestHeader("Content-type", "application/json");
+	http.onerror = function() {
+		ctx.comment.getElementsByClassName("error")[0].textContent = "Error performing request.";
+	}
+	http.onload = function() {
+		var reply = JSON.parse(this.responseText);
+		if (reply.success) {
+			var right = ctx.comment.getElementsByClassName("right")[0];
+			var cstatus = right.getElementsByClassName("comment-status")[0];
+			if (status == "active") {
+				if (cstatus != null)
+					cstatus.parentElement.removeChild(cstatus)
+			} else {
+				if (cstatus == null) {
+					var contents = right.getElementsByClassName("contents")[0];
+					cstatus = document.createElement("div");
+					cstatus.classList.add("comment-status");
+					right.insertBefore(cstatus, contents);
+				}
+				cstatus.textContent = "Set status: " + status;
+			}
+		} else {
+			ctx.comment.getElementsByClassName("error")[0].textContent = reply.error;
+		}
+	}
+	var data = {
+		id: ctx.comment.getAttribute("id"),
+		status: status
+	}
+	http.send(JSON.stringify(data));
+	return false;
+}
+
 function getClassAncestor(element, cls)
 {
 	while (element) {
