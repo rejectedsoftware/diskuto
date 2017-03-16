@@ -43,8 +43,8 @@ void main()
 	router.registerWebInterface(new WebFrontend(diskutoweb, dsettings));
 
 	auto settings = new HTTPServerSettings;
-	settings.bindAddresses = ["0.0.0.0"];
-	settings.port = 10888;
+	settings.bindAddresses = ["127.0.0.1"];
+	settings.port = 8080;
 	settings.sessionStore = new MemorySessionStore;
 	listenHTTP(settings, router);
 
