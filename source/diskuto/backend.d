@@ -1,5 +1,7 @@
 module diskuto.backend;
 
+import diskuto.userstore;
+
 import std.datetime : SysTime;
 import vibe.data.serialization : byName;
 
@@ -18,12 +20,12 @@ interface DiskutoBackend {
 
 struct StoredComment {
 	alias ID = string;
-	alias UserID = string;
+	alias UserID = StoredUser.ID;
 	ID id;
 	@byName CommentStatus status;
 	string topic;
 	ID replyTo;
-	UserID userID;
+	UserID author;
 	string name;
 	string email;
 	string website;

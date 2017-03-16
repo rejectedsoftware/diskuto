@@ -33,14 +33,14 @@ struct Comment {
 		this.age = max(now - comment.time, 1.msecs);
 		this.avatarWidth = 48;
 		this.avatarHeight = 48;
-		this.avatarID = comment.email.length ? comment.email : comment.userID ~ "@diskuto";
+		this.avatarID = comment.email.length ? comment.email : comment.author ~ "@diskuto";
 	}
 
 	bool isVisibleTo(StoredComment.UserID user)
 	{
 		//if (isModerator(user)) return true;
 		if (comment.status == CommentStatus.deleted) return false;
-		if (comment.userID == user) return true;
+		if (comment.author == user) return true;
 		return comment.status == CommentStatus.active;
 	}
 }

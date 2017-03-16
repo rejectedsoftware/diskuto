@@ -263,7 +263,7 @@ private final class DiskutoWebInterface {
 		m_sessionWebsite = website;
 
 		StoredComment comment;
-		comment.userID = user.id;
+		comment.author = user.id;
 		comment.topic = topic;
 		comment.replyTo = reply_to;
 		comment.name = name;
@@ -386,7 +386,7 @@ private final class DiskutoWebInterface {
 		if (!user.isModerator) {
 			auto c = m_settings.backend.getComment(comment);
 			auto now = Clock.currTime(UTC());
-			enforce(c.userID == user.id, "Not allowed to modify comment.");
+			enforce(c.author == user.id, "Not allowed to modify comment.");
 			enforce(now - c.time < m_settings.hardEditTimeLimit, "Comment cannot be modified anymore.");
 		}
 	}

@@ -22,6 +22,11 @@ class MongoDBBackend : DiskutoBackend {
 		enforce(parseMongoDBUrl(settings, database_url), "Failed to parse MongoDB URL.");
 		auto db = connectMongoDB(settings).getDatabase(settings.database);
 		m_comments = db["comments"];
+
+		// upgrade "author" field name
+		foreach (c; m_comments.find(["userID": ["$exists": true]], ["userID": true])) {
+			m_comments.update(["_id": c["_id"]], ["$unset": ["userID": Bson(null)], "$set": ["author": c["userID"]]]);
+		}
 	}
 
 	StoredComment.ID postComment(StoredComment comment)
@@ -56,14 +61,14 @@ class MongoDBBackend : DiskutoBackend {
 	void upvote(StoredComment.ID id, StoredComment.UserID user)
 	{
 		static struct DQ { @name("$ne") string ne; }
-		static struct Q { BsonObjectID _id; DQ downvotes; DQ userID; }
+		static struct Q { BsonObjectID _id; DQ downvotes; DQ author; }
 		m_comments.update(Q(BsonObjectID.fromString(id), DQ(user), DQ(user)), ["$addToSet": ["upvotes": user]]);
 	}
 
 	void downvote(StoredComment.ID id, StoredComment.UserID user)
 	{
 		static struct DQ { @name("$ne") string ne; }
-		static struct Q { BsonObjectID _id; DQ upvotes; DQ userID; }
+		static struct Q { BsonObjectID _id; DQ upvotes; DQ author; }
 		m_comments.update(Q(BsonObjectID.fromString(id), DQ(user), DQ(user)), ["$addToSet": ["downvotes": user]]);
 	}
 
