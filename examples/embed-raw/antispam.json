@@ -1,0 +1,8 @@
+[
+	{
+		"filter": "blacklist",
+		"settings": {
+			"words": ["sex", "drugs", "rock", "roll"]
+		}
+	}
+]
