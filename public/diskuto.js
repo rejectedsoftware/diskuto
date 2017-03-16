@@ -11,21 +11,21 @@ function updateFormSnap(self)
 
 function vote(self, dir)
 {
-	var comment = getClassAncestor(self, "comment");
-	var id = comment.id;
+	var ctx = getContext(self);
+	var id = ctx.comment.id;
 	var http = new XMLHttpRequest();
-	http.open("POST", window.diskutoBaseURL + "/vote", true);
+	http.open("POST", ctx.baseURL + "/vote", true);
 	http.setRequestHeader("Content-type", "application/json");
 	http.onload = function() {
 		var reply = JSON.parse(this.responseText);
 		if (reply.success) {
-			var count = comment.getElementsByClassName("vote-count")[0];
+			var count = ctx.comment.getElementsByClassName("vote-count")[0];
 			var newcount = Number(count.textContent) + (dir < 0 ? -1 : dir > 0 ? 1: 0);
 			count.textContent = newcount;
 			count.classList.remove("neg", "bal", "pos");
 			count.classList.add(newcount < 0 ? "neg" : newcount > 0 ? "pos" : "bal");
-			var upbtn = comment.getElementsByClassName("vote-up")[0].getElementsByTagName("button")[0];
-			var downbtn = comment.getElementsByClassName("vote-down")[0].getElementsByTagName("button")[0];
+			var upbtn = ctx.comment.getElementsByClassName("vote-up")[0].getElementsByTagName("button")[0];
+			var downbtn = ctx.comment.getElementsByClassName("vote-down")[0].getElementsByTagName("button")[0];
 			upbtn.setAttribute("disabled", "");
 			downbtn.setAttribute("disabled", "");
 			if (dir < 0) downbtn.classList.add("chosen");
@@ -38,13 +38,12 @@ function vote(self, dir)
 
 function confirmReply(self)
 {
-	var comment = getClassAncestor(self, "comment");
-	if (!comment) comment = getClassAncestor(self, "diskuto");
-	var error = comment.getElementsByClassName("error")[0];
+	var ctx = getContext(self);
+	var error = ctx.comment.getElementsByClassName("error")[0];
 	error.textContent = "";
 
 	var http = new XMLHttpRequest();
-	http.open("POST", window.diskutoBaseURL + "/post", true);
+	http.open("POST", ctx.baseURL + "/post", true);
 	http.setRequestHeader("Content-type", "application/json");
 	http.onerror = function() {
 		error.textContent = "Error performing request.";
@@ -52,7 +51,7 @@ function confirmReply(self)
 	http.onload = function() {
 		var reply = JSON.parse(this.responseText);
 		if (reply.success) {
-			var replies = comment.getElementsByClassName("replies")[0];
+			var replies = ctx.comment.getElementsByClassName("replies")[0];
 			var tmp = document.createElement('div');
 			tmp.innerHTML = reply.rendered;
 			replies.insertBefore(tmp.firstElementChild, replies.firstChild);
@@ -61,7 +60,7 @@ function confirmReply(self)
 			document.activeElement.blur();
 			updateFormSnap(text);
 		} else {
-			comment.getElementsByClassName("error")[0].textContent = reply.error;
+			ctx.comment.getElementsByClassName("error")[0].textContent = reply.error;
 		}
 	}
 	var data = {};
@@ -74,11 +73,11 @@ function confirmReply(self)
 
 function showEdit(self)
 {
-	var actionbar = getClassAncestor(self, "action-bar");
-	var comment = getClassAncestor(actionbar, "comment");
-	var area = comment.getElementsByClassName("edit")[0];
+	var ctx = getContext(self);
+	var actionbar = ctx.comment.getElementsByClassName("action-bar")[0];
+	var area = ctx.comment.getElementsByClassName("edit")[0];
 	var text = area.getElementsByTagName("textarea")[0];
-	var contents = comment.getElementsByClassName("contents")[0];
+	var contents = ctx.comment.getElementsByClassName("contents")[0];
 	area.style.display = "flex";
 	text.style.height = contents.offsetHeight;
 	actionbar.style.display = "none";
@@ -87,10 +86,10 @@ function showEdit(self)
 
 function cancelEdit(self)
 {
-	var comment = getClassAncestor(self, "comment");
-	var area = comment.getElementsByClassName("edit")[0];
-	var actionbar = comment.getElementsByClassName("action-bar")[0];
-	var contents = comment.getElementsByClassName("contents")[0];
+	var ctx = getContext(self);
+	var area = ctx.comment.getElementsByClassName("edit")[0];
+	var actionbar = ctx.comment.getElementsByClassName("action-bar")[0];
+	var contents = ctx.comment.getElementsByClassName("contents")[0];
 	area.style.display = "none";
 	actionbar.style.display = "flex";
 	contents.style.display = "block";
@@ -98,23 +97,22 @@ function cancelEdit(self)
 
 function confirmEdit(self)
 {
-	var comment = getClassAncestor(self, "comment");
-	if (!comment) comment = getClassAncestor(self, "diskuto");
+	var ctx = getContext(self);
 	var http = new XMLHttpRequest();
-	http.open("POST", window.diskutoBaseURL + "/edit", true);
+	http.open("POST", ctx.baseURL + "/edit", true);
 	http.setRequestHeader("Content-type", "application/json");
 	http.onerror = function() {
-		comment.getElementsByClassName("error")[0].textContent = "Error performing request.";
+		ctx.comment.getElementsByClassName("error")[0].textContent = "Error performing request.";
 	}
 	http.onload = function() {
 		var reply = JSON.parse(this.responseText);
 		if (reply.success) {
 			var tmp = document.createElement('div');
 			tmp.innerHTML = reply.rendered;
-			comment.getElementsByClassName("contents")[0].innerHTML = tmp.getElementsByClassName("contents")[0].innerHTML;
+			ctx.comment.getElementsByClassName("contents")[0].innerHTML = tmp.getElementsByClassName("contents")[0].innerHTML;
 			cancelEdit(self);
 		} else {
-			comment.getElementsByClassName("error")[0].textContent = reply.error;
+			ctx.comment.getElementsByClassName("error")[0].textContent = reply.error;
 		}
 	}
 	var data = {};
@@ -127,38 +125,37 @@ function confirmEdit(self)
 
 function showDelete(self)
 {
-	var comment = getClassAncestor(self, "comment");
-	var actionbar = comment.getElementsByClassName("action-bar")[0];
-	var area = comment.getElementsByClassName("delete")[0];
+	var ctx = getContext(self);
+	var actionbar = ctx.comment.getElementsByClassName("action-bar")[0];
+	var area = ctx.comment.getElementsByClassName("delete")[0];
 	area.style.display = "block";
 	actionbar.style.display = "none";
 }
 
 function cancelDelete(self)
 {
-	var comment = getClassAncestor(self, "comment");
-	var area = comment.getElementsByClassName("delete")[0];
-	var actionbar = comment.getElementsByClassName("action-bar")[0];
+	var ctx = getContext(self);
+	var area = ctx.comment.getElementsByClassName("delete")[0];
+	var actionbar = ctx.comment.getElementsByClassName("action-bar")[0];
 	actionbar.style.display = "flex";
 	area.style.display = "none";
 }
 
 function confirmDelete(self)
 {
-	var comment = getClassAncestor(self, "comment");
-	if (!comment) comment = getClassAncestor(self, "diskuto");
+	var ctx = getContext(self);
 	var http = new XMLHttpRequest();
-	http.open("POST", window.diskutoBaseURL + "/delete", true);
+	http.open("POST", ctx.baseURL + "/delete", true);
 	http.setRequestHeader("Content-type", "application/json");
 	http.onerror = function() {
-		comment.getElementsByClassName("error")[0].textContent = "Error performing request.";
+		ctx.comment.getElementsByClassName("error")[0].textContent = "Error performing request.";
 	}
 	http.onload = function() {
 		var reply = JSON.parse(this.responseText);
 		if (reply.success) {
-			comment.parentElement.removeChild(comment);
+			ctx.comment.parentElement.removeChild(ctx.comment);
 		} else {
-			comment.getElementsByClassName("error")[0].textContent = reply.error;
+			ctx.comment.getElementsByClassName("error")[0].textContent = reply.error;
 		}
 	}
 	var data = {};
@@ -178,4 +175,14 @@ function getClassAncestor(element, cls)
 		element = element.parentElement;
 	}
 	return element;
+}
+
+function getContext(element)
+{
+	var ret = {};
+	ret.diskuto = getClassAncestor(element, "diskuto");
+	ret.comment = getClassAncestor(element, "comment");
+	if (!ret.comment) ret.comment = ret.diskuto;
+	ret.baseURL = ret.diskuto.getAttribute("diskuto:base");
+	return ret;
 }

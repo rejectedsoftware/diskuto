@@ -1,2 +1,2 @@
 include diskuto.inc.comments
-- includeDiskuto(web, topic);
+- includeDiskuto(web, topic, base);

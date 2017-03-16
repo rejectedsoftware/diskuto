@@ -25,7 +25,7 @@ DiskutoWeb registerDiskutoWeb(URLRouter router, DiskutoSettings settings)
 	auto wi = new DiskutoWebInterface(settings);
 	
 	auto wsettings = new WebInterfaceSettings;
-	wsettings.urlPrefix = "diskuto";
+	wsettings.urlPrefix = "/diskuto";
 	router.registerWebInterface(wi, wsettings);
 	
 	auto fsettings = new HTTPFileServerSettings;
@@ -39,6 +39,11 @@ struct DiskutoWeb {
 	private DiskutoWebInterface m_web;
 
 	package @property DiskutoBackend backend() { return m_web.m_settings.backend; }
+
+	string getBasePath(string root_path = "/")
+	{
+		return root_path ~ "diskuto";
+	}
 
 	@property string uid()
 	{
@@ -65,7 +70,8 @@ struct DiskutoWeb {
 	{
 		import diet.html : compileHTMLDietFile;
 		DiskutoWeb web = this;
-		dst.compileHTMLDietFile!("diskuto.part.comments.dt", req, web, topic);
+		string base = web.getBasePath(req.rootDir);
+		dst.compileHTMLDietFile!("diskuto.part.comments.dt", req, web, base, topic);
 	}
 }
 
@@ -114,6 +120,14 @@ private final class DiskutoWebInterface {
 		auto usr = getUser(req);
 		m_settings.backend.downvote(id, usr.id);
 		redirectBack(req);
+	}
+
+	@errorDisplay!sendWebError
+	void getRenderTopic(string topic, string base)
+	{
+		auto web = DiskutoWeb(this);
+		web.setupRequest();
+		render!("diskuto.part.comments.dt", web, base, topic);
 	}
 
 	@errorDisplay!sendJsonError

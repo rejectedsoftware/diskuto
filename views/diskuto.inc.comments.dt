@@ -72,18 +72,18 @@
 				- if (usr.isModerator || c.isVisibleTo(usr.id))
 					- renderCommentRec(topic, web, usr, c);
 
-- void includeDiskuto(DiskutoWeb web, string topic)
+- void includeDiskuto(DiskutoWeb web, string topic, string base_path = null)
 	- import vibe.data.json : Json;
+	- if (!base_path.length)
+		- base_path = web.getBasePath(req.rootDir);
 
-	.diskuto
+	.diskuto(diskuto:topic=topic, diskuto:base=base_path)
 		- auto ctx = getCommentsContext(req, web, topic);
 		- auto usr = ctx.user;
-		- auto base_url = req.rootDir ~ "diskuto";
 
-		style @import url('#{base_url}/diskuto.css');
-		script(src="#{base_url}/diskuto.js")
-		script window.diskutoBaseURL = #{Json(base_url)};
-		noscript: style @import url('#{base_url}/diskuto-noscript.css');
+		style @import url('#{base_path}/diskuto.css');
+		script(src="#{base_path}/diskuto.js")
+		noscript: style @import url('#{base_path}/diskuto-noscript.css');
 
 		p& #{ctx.commentCount} comments
 
