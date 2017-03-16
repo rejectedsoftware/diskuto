@@ -45,7 +45,6 @@ void main()
 	auto dsettings = new DiskutoSettings;
 	dsettings.commentStore = new MongoDBCommentStore("mongodb://127.0.0.1/diskuto");
 	dsettings.antispam = parseJsonString(`[{"filter": "blacklist", "settings": {"words": ["sex", "drugs", "rock", "roll"]}}]`);
-	dsettings.resourcePath = "../../public/";
 
 	auto router = new URLRouter;
 	auto diskutoweb = router.registerDiskutoWeb(dsettings);
