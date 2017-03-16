@@ -23,7 +23,7 @@ struct StoredComment {
 	alias ID = string;
 	alias UserID = StoredUser.ID;
 	ID id;
-	@byName CommentStatus status;
+	@byName CommentStatus status = CommentStatus.active;
 	string topic;
 	ID replyTo;
 	UserID author;

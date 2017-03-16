@@ -28,6 +28,9 @@ class MongoDBBackend : DiskutoBackend {
 			m_comments.update(["_id": c["_id"]], ["$unset": ["userID": Bson(null)], "$set": ["author": c["userID"]]]);
 		// upgrade missing "clientAddress" field name
 		m_comments.update(["clientAddress": ["$exists": false]], ["$set": ["clientAddress": ""]], UpdateFlags.multiUpdate);
+		// upgrade old status field
+		m_comments.update(["status": cast(int)CommentStatus.active], ["$set": ["status": "active"]], UpdateFlags.multiUpdate);
+		m_comments.update(["status": cast(int)CommentStatus.disabled], ["$set": ["status": "disabled"]], UpdateFlags.multiUpdate);
 	}
 
 	StoredComment.ID postComment(StoredComment comment)
@@ -93,7 +96,8 @@ class MongoDBBackend : DiskutoBackend {
 // Converts a string "id" field to a BsonObjectID "_id" field for storage in a MongoDB collection
 struct MongoStruct(T) {
 	import std.format : format;
-	import std.traits : FieldTypeTuple, FieldNameTuple;
+	import std.traits : FieldTypeTuple, FieldNameTuple, getUDAs;
+	import std.meta : AliasSeq;
 
 	alias FieldTypes = FieldTypeTuple!T;
 	alias FieldNames = FieldNameTuple!T;
@@ -114,9 +118,14 @@ struct MongoStruct(T) {
 	static string fields()
 	{
 		string ret;
-		foreach (i, N; FieldNames)
+		foreach (i, N; FieldNames) {
+			string udas;
+			alias F = AliasSeq!(__traits(getMember, T, N));
+			static if (getUDAs!(F, ByNameAttribute).length) udas ~= "@byName ";
+			static if (getUDAs!(F, OptionalAttribute).length) udas ~= "@optional ";
 			static if (N != "id")
-				ret ~= format("FieldTypes[%s] %s;", i, N);
+				ret ~= format("%s FieldTypes[%s] %s;", udas, i, N);
+		}
 		return ret;
 	}
 }
