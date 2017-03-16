@@ -1,6 +1,8 @@
 module diskuto.web;
 
 import diskuto.backend : CommentStatus, DiskutoBackend, StoredComment;
+import diskuto.userstore : DiskutoUserStore, StoredUser;
+import diskuto.settings : DiskutoSettings;
 
 import vibe.http.router : URLRouter;
 import vibe.http.server : HTTPServerRequest, HTTPServerResponse;
@@ -12,20 +14,32 @@ import std.typecons : Nullable;
 
 DiskutoWeb registerDiskutoWeb(URLRouter router, DiskutoBackend backend)
 {
-	auto wi = new DiskutoWebInterface(backend);
+	auto settings = new DiskutoSettings;
+	settings.backend = backend;
+	return registerDiskutoWeb(router, settings);
+}
+
+DiskutoWeb registerDiskutoWeb(URLRouter router, DiskutoSettings settings)
+{
+	auto wi = new DiskutoWebInterface(settings);
 	router.registerWebInterface(wi);
 	return DiskutoWeb(wi);
 }
 
- struct DiskutoWeb {
+struct DiskutoWeb {
 	private DiskutoWebInterface m_web;
 
-	package @property DiskutoBackend backend() { return m_web.m_backend; }
+	package @property DiskutoBackend backend() { return m_web.m_settings.backend; }
 
 	@property string uid()
 	{
 		assert(m_web.m_userID.length, "No UID, setupRequest() not called?");
 		return m_web.m_userID;
+	}
+
+	@property DiskutoSettings settings()
+	{
+		return m_web.m_settings;
 	}
 
 	void setupRequest()
@@ -42,10 +56,10 @@ DiskutoWeb registerDiskutoWeb(URLRouter router, DiskutoBackend backend)
 @path("diskuto")
 private final class DiskutoWebInterface {
 	import antispam.antispam;
-	import diskuto.internal.webutils : SessionVars;
+	import diskuto.internal.webutils : SessionVars, User;
 
 	private {
-		DiskutoBackend m_backend;
+		DiskutoSettings m_settings;
 		AntispamState m_antispam;
 		SessionVar!(string, SessionVars.userID) m_userID;
 		SessionVar!(string, SessionVars.name) m_sessionName;
@@ -54,12 +68,12 @@ private final class DiskutoWebInterface {
 		SessionVar!(string, SessionVars.lastPost) m_sessionLastPost;
 	}
 
-	this(DiskutoBackend backend)
+	this(DiskutoSettings settings)
 	{
 		import vibe.core.file : readFileUTF8;
 		import vibe.data.json : parseJsonString;
 
-		m_backend = backend;
+		m_settings = settings;
 		m_antispam = new AntispamState;
 		m_antispam.loadConfig(parseJsonString(readFileUTF8("antispam.json")));
 	}
@@ -67,21 +81,23 @@ private final class DiskutoWebInterface {
 	@errorDisplay!sendWebError
 	void post(HTTPServerRequest req, string name, string email, string website, string topic, string reply_to, string text)
 	{
-		doPost(req, name, email, website, topic, reply_to, text);
+		doPost(req, getUser(req), name, email, website, topic, reply_to, text);
 		redirectBack(req);
 	}
 
 	@errorDisplay!sendWebError
 	void up(HTTPServerRequest req, string id)
 	{
-		m_backend.upvote(id, getUserID());
+		auto usr = getUser(req);
+		m_settings.backend.upvote(id, usr.id);
 		redirectBack(req);
 	}
 
 	@errorDisplay!sendWebError
 	void down(HTTPServerRequest req, string id)
 	{
-		m_backend.downvote(id, getUserID());
+		auto usr = getUser(req);
+		m_settings.backend.downvote(id, usr.id);
 		redirectBack(req);
 	}
 
@@ -89,7 +105,7 @@ private final class DiskutoWebInterface {
 	void postPost(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto data = req.json;
-		auto comment = doPost(req,
+		auto comment = doPost(req, getUser(req),
 			data["name"].get!string,
 			data["email"].get!string,
 			data["website"].get!string,
@@ -111,11 +127,12 @@ private final class DiskutoWebInterface {
 	@errorDisplay!sendJsonError
 	void edit(HTTPServerRequest req, HTTPServerResponse res)
 	{
+		auto usr = getUser(req);
 		auto data = req.json;
 
-		enforceAuthorizedToEdit(data["id"].get!string, m_userID);
+		enforceAuthorizedToEdit(req, data["id"].get!string, usr);
 
-		m_backend.editComment(data["id"].get!string, data["text"].get!string);
+		m_settings.backend.editComment(data["id"].get!string, data["text"].get!string);
 
 		static struct Reply {
 			bool success = true;
@@ -130,11 +147,12 @@ private final class DiskutoWebInterface {
 	@errorDisplay!sendJsonError
 	void postDelete(HTTPServerRequest req, HTTPServerResponse res)
 	{
+		auto usr = getUser(req);
 		auto data = req.json;
 
-		enforceAuthorizedToEdit(data["id"].get!string, m_userID);
+		enforceAuthorizedToEdit(req, data["id"].get!string, usr);
 
-		m_backend.deleteComment(data["id"].get!string);
+		m_settings.backend.deleteComment(data["id"].get!string);
 
 		static struct Reply { bool success = true; }
 		res.writeJsonBody(Reply.init);
@@ -143,11 +161,12 @@ private final class DiskutoWebInterface {
 	@errorDisplay!sendJsonError
 	void vote(HTTPServerRequest req, HTTPServerResponse res)
 	{
+		auto usr = getUser(req);
 		auto cmd = req.json;
 		auto dir = cmd["dir"].get!int;
 		auto id = cmd["id"].get!string;
-		if (dir > 0) m_backend.upvote(id, getUserID());
-		else if (dir < 0) m_backend.downvote(id, getUserID());
+		if (dir > 0) m_settings.backend.upvote(id, usr.id);
+		else if (dir < 0) m_settings.backend.downvote(id, usr.id);
 		res.writeJsonBody(["success": true]);
 	}
 
@@ -155,14 +174,14 @@ private final class DiskutoWebInterface {
 	void getTopic(HTTPServerResponse res, string topic)
 	{
 		static struct S { bool success; StoredComment[] comments; }
-		res.writeJsonBody(S(true, m_backend.getCommentsForTopic(topic)));
+		res.writeJsonBody(S(true, m_settings.backend.getCommentsForTopic(topic)));
 	}
 
 	@errorDisplay!sendJsonError
 	void getLatestComments(HTTPServerResponse res)
 	{
 		static struct S { bool success; StoredComment[] comments; }
-		res.writeJsonBody(S(true, m_backend.getLatestComments()));
+		res.writeJsonBody(S(true, m_settings.backend.getLatestComments()));
 	}
 
 	@noRoute
@@ -181,17 +200,25 @@ private final class DiskutoWebInterface {
 		redirectBack(req, "diskuto-error", _error);
 	}
 
-	private StoredComment doPost(HTTPServerRequest req, string name, string email, string website, string topic, string reply_to, string text)
+	private StoredComment doPost(HTTPServerRequest req, User user, string name, string email, string website, string topic, string reply_to, string text)
 	{
 		import std.datetime : Clock, UTC;
 
 		enforce(name.length < 40, "Name is too long.");
 		enforce(text.length > 0, "Missing message text.");
 		enforce(text.length < 4096, "Message text is too long.");
+		
 		if (email.length > 0) {
 			enforce(email.length < 80, "E-mail is too long.");
 			import vibe.utils.validation : validateEmail;
 			validateEmail(email);
+
+			if (user.registered) {
+				enforce(email == user.email, "Invalid e-mail address: expected "~user.email);
+			} else {
+				enforce(m_settings.userStore.getUserForEmail(email).isNull,
+					"This e-mail address is already associated with a registered account. Please log in to use this address.");
+			}
 		}
 
 		if (website.length > 0) {
@@ -207,7 +234,7 @@ private final class DiskutoWebInterface {
 		m_sessionWebsite = website;
 
 		StoredComment comment;
-		comment.userID = getUserID();
+		comment.userID = user.id;
 		comment.topic = topic;
 		comment.replyTo = reply_to;
 		comment.name = name;
@@ -215,20 +242,20 @@ private final class DiskutoWebInterface {
 		comment.website = website;
 		comment.text = text;
 		comment.time = Clock.currTime(UTC());
-		comment.id = m_backend.postComment(comment);
+		comment.id = m_settings.backend.postComment(comment);
 
 		bool is_spam_async = false;
 
 		checkSpamState(req, name, email, website, text, {
 			if (comment.id.length)
-				m_backend.setCommentStatus(comment.id, CommentStatus.spam);
+				m_settings.backend.setCommentStatus(comment.id, CommentStatus.spam);
 			is_spam_async = true;
 		});
 
 		m_sessionLastPost = comment.id;
 
 		if (is_spam_async)
-			m_backend.setCommentStatus(comment.id, CommentStatus.spam);
+			m_settings.backend.setCommentStatus(comment.id, CommentStatus.spam);
 		return comment;
 	}
 
@@ -246,10 +273,19 @@ private final class DiskutoWebInterface {
 		redirect(url);
 	}
 
-	private string getUserID()
+	private User getUser(HTTPServerRequest req)
 	{
+		auto usr = m_settings.userStore.getLoggedInUser(req);
+		if (!usr.isNull)
+			return User(usr, true);
 		enforce(m_userID.length, "Unauthorized request. Please make sure that your browser supports cookies.");
-		return m_userID;
+		User ret;
+		ret.registered = false;
+		ret.id = m_userID;
+		ret.name = m_sessionName;
+		ret.email = m_sessionEmail;
+		ret.website = m_sessionWebsite;
+		return ret;
 	}
 
 	private string renderComment(HTTPServerRequest req, StoredComment scomment)
@@ -258,13 +294,15 @@ private final class DiskutoWebInterface {
 
 		import std.array : appender;
 		import diet.html : compileHTMLDietFile;
-		import diskuto.internal.webutils : Comment;
+		import diskuto.internal.webutils : Comment, getCommentsContext;
 
 		auto c = Comment(scomment, Clock.currTime(UTC()));
 		auto comment = &c;
-		auto uid = getUserID();
+		auto web = DiskutoWeb(this);
+		auto ctx = getCommentsContext(req, web, null);
+		auto usr = ctx.user;
 		auto dst = appender!string();
-		dst.compileHTMLDietFile!("diskuto.part.comment.dt", req, comment, uid);
+		dst.compileHTMLDietFile!("diskuto.part.comment.dt", req, web, usr, comment);
 		return dst.data;
 	}
 
@@ -308,15 +346,17 @@ private final class DiskutoWebInterface {
 		)(msg);
 	}
 
-	private void enforceAuthorizedToEdit(StoredComment.ID comment, StoredComment.UserID user)
+	private void enforceAuthorizedToEdit(HTTPServerRequest req, StoredComment.ID comment, in ref StoredUser user)
 	{
 		import std.datetime : Clock, UTC;
 		import core.time : minutes;
 
-		auto c = m_backend.getComment(comment);
-		auto now = Clock.currTime(UTC());
-		enforce(c.userID == user, "Not allowed to modify comment.");
-		enforce(now - c.time < 15.minutes, "Comment cannot be modified anymore.");
+		if (!user.isModerator) {
+			auto c = m_settings.backend.getComment(comment);
+			auto now = Clock.currTime(UTC());
+			enforce(c.userID == user.id, "Not allowed to modify comment.");
+			enforce(now - c.time < m_settings.hardEditTimeLimit, "Comment cannot be modified anymore.");
+		}
 	}
 }
 
@@ -326,7 +366,7 @@ private void writeSuccess(HTTPServerResponse res)
 	res.writeJsonBody(S(true));
 }
 
-private struct ValidURL {
+/*private struct ValidURL {
 	import vibe.inet.url : URL;
 
 	private string m_value;
@@ -346,4 +386,4 @@ private struct ValidURL {
 		catch (Exception e) *error = e.msg;
 		return ret;
 	}
-}
+}*/

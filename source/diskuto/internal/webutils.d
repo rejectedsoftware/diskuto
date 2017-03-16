@@ -1,7 +1,9 @@
 module diskuto.internal.webutils;
 
 import diskuto.backend : CommentStatus, DiskutoBackend, StoredComment;
+import diskuto.userstore : StoredUser;
 import diskuto.web : DiskutoWeb;
+import vibe.http.server : HTTPServerRequest;
 import std.algorithm.comparison : max;
 import std.datetime : SysTime;
 import core.time : Duration, msecs;
@@ -43,7 +45,14 @@ struct Comment {
 	}
 }
 
-auto getCommentsContext(DiskutoWeb web, string topic)
+struct User {
+	StoredUser user;
+	alias user this;
+	bool registered;
+}
+
+
+auto getCommentsContext(HTTPServerRequest req, DiskutoWeb web, string topic)
 {
 	import diskuto.backend : StoredComment;
 	import std.datetime : Clock, UTC;
@@ -55,50 +64,68 @@ auto getCommentsContext(DiskutoWeb web, string topic)
 	static struct Info {
 		size_t commentCount;
 		Comment*[] comments;
+		User user;
 	}
 
 	SysTime now = Clock.currTime(UTC());
 
-	auto dbcomments = backend.getCommentsForTopic(topic);
-	auto comments = new Comment[](dbcomments.length);
-	size_t curidx;
 	Info ret;
-	ret.commentCount = dbcomments.count!(c => c.status == CommentStatus.active);
-	size_t[StoredComment.ID] map;
-	foreach (c; dbcomments) {
-		auto idx = curidx++;
-		map[c.id] = idx;
-		comments[idx] = Comment(c, now);
+	if (topic.length) {
+		auto dbcomments = backend.getCommentsForTopic(topic);
+		auto comments = new Comment[](dbcomments.length);
+		size_t curidx;
+		ret.commentCount = dbcomments.count!(c => c.status == CommentStatus.active);
+		size_t[StoredComment.ID] map;
+		foreach (c; dbcomments) {
+			auto idx = curidx++;
+			map[c.id] = idx;
+			comments[idx] = Comment(c, now);
+		}
+
+		foreach (ref c; comments) {
+			if (!c.replyTo.length) ret.comments ~= &c;
+			else {
+				if (auto rti = c.replyTo in map)
+					comments[*rti].replies ~= &c;
+			}
+		}
+
+		static double getScore(Comment* c) {
+			// basic sortig based on the ratio of up and downvotes
+			double score = (c.upvotes.length + 1.0) / (c.downvotes.length + 1.0);
+
+			// new comments get a boost for about two hours (and comments
+			// with the same basic score will stay sorted by time)
+			// negative comments will only get a boost for around an hour
+			if (score < 1.0) score += 0.5 / (c.age.total!"seconds" / (60.0 * 60));
+			else score += 0.5 / (c.age.total!"seconds" / (2.0 * 60 * 60));
+
+			return score;
+		}
+
+		void sortRec(Comment*[] comments)
+		{
+			comments.sort!((a, b) => getScore(a) > getScore(b));
+			foreach (c; comments)
+				sortRec(c.replies);
+		}
+		sortRec(ret.comments);
 	}
 
-	foreach (ref c; comments) {
-		if (!c.replyTo.length) ret.comments ~= &c;
-		else {
-			if (auto rti = c.replyTo in map)
-				comments[*rti].replies ~= &c;
+	if (req.session) {
+		ret.user.id = web.uid;
+		ret.user.name = req.session.get!string(SessionVars.name, null);
+		ret.user.email = req.session.get!string(SessionVars.email, null);
+		ret.user.website = req.session.get!string(SessionVars.website, null);
+	}
+
+	if (web.settings.userStore) {
+		auto u = web.settings.userStore.getLoggedInUser(req);
+		if (!u.isNull) {
+			ret.user = u;
+			ret.user.registered = true;
 		}
 	}
-
-	static double getScore(Comment* c) {
-		// basic sortig based on the ratio of up and downvotes
-		double score = (c.upvotes.length + 1.0) / (c.downvotes.length + 1.0);
-
-		// new comments get a boost for about two hours (and comments
-		// with the same basic score will stay sorted by time)
-		// negative comments will only get a boost for around an hour
-		if (score < 1.0) score += 0.5 / (c.age.total!"seconds" / (60.0 * 60));
-		else score += 0.5 / (c.age.total!"seconds" / (2.0 * 60 * 60));
-
-		return score;
-	}
-
-	void sortRec(Comment*[] comments)
-	{
-		comments.sort!((a, b) => getScore(a) > getScore(b));
-		foreach (c; comments)
-			sortRec(c.replies);
-	}
-	sortRec(ret.comments);
 
 	return ret;
 }

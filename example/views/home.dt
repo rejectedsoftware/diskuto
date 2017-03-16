@@ -25,6 +25,18 @@ html
 
 			a(href="#", onClick="document.body.classList.toggle('dark')") Toggle theme
 
+			p You can log in with the e-mail "john@doe.com" or "admin@example.com" and password "secret".
+
+			.error= _error
+
+			- if (!req.session || !req.session.get("userstore.loginUser", "").length)
+				form(method="POST", action="login")
+					input(type="text", name="email")
+					input(type="password", name="password")
+					button(type="submit") Log in
+			- else
+				p Currently logged in - #[a(href="logout") Log out]
+
 
 			include diskuto.inc.comments
 			- includeDiskuto(diskuto, "example");

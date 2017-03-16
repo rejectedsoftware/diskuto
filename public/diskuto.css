@@ -18,12 +18,13 @@
 }
 .diskuto input, .diskuto textarea { background: white; }
 .diskuto input, .diskuto button { transition: all 0.3s ease; }
+.diskuto input:disabled { background-color: #eee; }
 .diskuto button { background-color: #f0f0f0; }
 .diskuto button.chosen { color: #fa4; font-weight: bold; background-color: #888; }
 .diskuto button:active { border: 1px solid #bbb; background-color: #ddd; }
 .diskuto button:hover { border: 1px solid #bbb; background-color: #ccc; }
 .diskuto button:disabled { border: 1px solid #d8d8d8; background-color: #ddd; box-shadow: none; }
-.diskuto .comment { display: flex; flex-wrap: wrap; margin: 1.5em 0; }
+.diskuto .comment { display: flex; flex-wrap: wrap; margin-top: 1.5em; }
 .diskuto .avatar { margin-right: 0.5em; margin-bottom: 0.5em; border-radius: 5px; border: 1px solid #fff; box-shadow: 0 0 5px 0 #aaa; width: 48px; height: 48px; }
 .diskuto .comment .comment .avatar { width: 42px; height: 42px; }
 .diskuto .right { flex-grow: 1; flex-basis: 0; }

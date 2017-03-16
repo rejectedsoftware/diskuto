@@ -1,27 +1,22 @@
+- import diskuto.userstore : StoredUser;
 - import diskuto.web : DiskutoWeb;
-- import diskuto.internal.webutils : Comment, getCommentsContext;
+- import diskuto.internal.webutils : Comment, User, getCommentsContext;
 - import vibe.web.web : trWeb;
 - import core.time : minutes;
 - import fuzzydate : toFuzzyDate;
 
-- void commentForm(string topic, Comment* comment)
-	- string name, email, website;
-	- if (req.session)
-		- name = req.session.get("diskuto.name", "");
-		- email = req.session.get("diskuto.email", "");
-		- website = req.session.get("diskuto.website", "");
-
+- void commentForm(string topic, ref User user, Comment* comment)
 	form.reply-form(method="POST", action="#{req.rootDir}diskuto", onSubmit="return confirmReply(this)")
 		input(type="hidden", name="topic", value=topic)
 		input(type="hidden", name="reply_to", value=comment ? comment.id : "")
 		- auto ph = comment ? trWeb("Type here to reply.") : trWeb("Type here to leave a comment.");
 		textarea(name="text", rows=3, placeholder=ph, onfocus="updateFormSnap(this)", onblur="updateFormSnap(this)", onchange="updateFormSnap(this)", onkeydown="updateFormSnap(this)", onkeyup="updateFormSnap(this)", autocomplete="off")
-		input(type="text", name="name", value=name, placeholder=trWeb("Name (optional)"))
-		input(type="text", name="email", value=email, placeholder=trWeb("Email (optional)"), title=trWeb("Used for notifications and avatar image only"))
-		input(type="text", name="website", value=website, placeholder=trWeb("Website (optional)"))
+		input(type="text", name="name", value=user.name, placeholder=trWeb("Name (optional)"), disabled=user.registered)
+		input(type="text", name="email", value=user.email, placeholder=trWeb("Email (optional)"), title=trWeb("Used for notifications and avatar image only"), disabled=user.registered)
+		input(type="text", name="website", value=user.website, placeholder=trWeb("Website (optional)"), disabled=user.registered)
 		button(type="submit")& Submit
 
-- void renderCommentRec(string topic, string uid, Comment* comment)
+- void renderCommentRec(string topic, DiskutoWeb web, ref User usr, Comment* comment)
 	.comment(id=comment.id)
 		- import diskuto.avatar : generateAvatar;
 		- import std.algorithm.searching : canFind;
@@ -53,9 +48,9 @@
 				button(type="submit")& Confirm
 
 		.action-bar
-			- bool have_upvoted = uid.length && comment.upvotes.canFind(uid);
-			- bool have_downvoted = uid.length && comment.downvotes.canFind(uid);
-			- bool vote_disabled = have_upvoted || have_downvoted || comment.userID == uid;
+			- bool have_upvoted = usr.id.length && comment.upvotes.canFind(usr.id);
+			- bool have_downvoted = usr.id.length && comment.downvotes.canFind(usr.id);
+			- bool vote_disabled = have_upvoted || have_downvoted || comment.userID == usr.id;
 			- auto vote_total = cast(long)comment.upvotes.length - cast(long)comment.downvotes.length;
 			
 			form.vote-up(method="POST", action="#{req.rootDir}diskuto/up", onSubmit="return vote(this, 1)")
@@ -66,21 +61,21 @@
 				input(type="hidden", name="id", value=comment.id)
 				button(type="submit", disabled=vote_disabled, class=have_downvoted ? "chosen" : "") ▼
 			
-			- if (comment.userID == uid && comment.age < 5.minutes)
+			- if (comment.userID == usr.id && comment.age < web.settings.softEditTimeLimit || usr.isModerator)
 				button.edit-button(type="button", onClick="showEdit(this)")& Edit
 				button.delete-button(type="button", onClick="showDelete(this)")& Delete
 
-			- commentForm(topic, comment);
+			- commentForm(topic, usr, comment);
 
 		.replies
 			- foreach (c; comment.replies)
-				- if (c.isVisibleTo(uid))
-					- renderCommentRec(topic, uid, c);
+				- if (usr.isModerator || c.isVisibleTo(usr.id))
+					- renderCommentRec(topic, web, usr, c);
 
 - void includeDiskuto(DiskutoWeb web, string topic)
 	.diskuto
-		- auto ctx = getCommentsContext(web, topic);
-		- auto uid = web.uid;
+		- auto ctx = getCommentsContext(req, web, topic);
+		- auto usr = ctx.user;
 
 		style @import url('#{req.rootDir}diskuto.css');
 		script(src="#{req.rootDir}diskuto.js")
@@ -91,9 +86,9 @@
 
 		.error= req.query.get("diskuto-error", "")
 
-		- commentForm(topic, null);
+		- commentForm(topic, usr, null);
 
 		.replies
 			- foreach (c; ctx.comments)
-				- if (c.isVisibleTo(uid))
-					- renderCommentRec(topic, uid, c);
+				- if (usr.isModerator || c.isVisibleTo(usr.id))
+					- renderCommentRec(topic, web, usr, c);
