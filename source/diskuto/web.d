@@ -52,7 +52,7 @@ struct DiskutoWeb {
 		}
 	}
 
-	void generateInclude(R)(R dst, HTTPServerRequest req, string topic)
+	void generateInclude(R)(ref R dst, HTTPServerRequest req, string topic)
 	{
 		import diet.html : compileHTMLDietFile;
 		DiskutoWeb web = this;
@@ -287,7 +287,7 @@ private final class DiskutoWebInterface {
 			if (!usr.isNull)
 				return User(usr, true);
 		}
-		
+
 		enforce(m_userID.length, "Unauthorized request. Please make sure that your browser supports cookies.");
 		User ret;
 		ret.registered = false;
