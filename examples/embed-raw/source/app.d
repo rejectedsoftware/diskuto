@@ -43,11 +43,11 @@ void main()
 {
 	auto dsettings = new DiskutoSettings;
 	dsettings.backend = new MongoDBBackend("mongodb://127.0.0.1/diskuto");
+	dsettings.resourcePath = "../../public/";
 
 	auto router = new URLRouter;
 	auto diskutoweb = router.registerDiskutoWeb(dsettings);
 	router.registerWebInterface(new WebFrontend(diskutoweb, dsettings));
-	router.get("*", serveStaticFiles("../../public/"));
 
 	auto settings = new HTTPServerSettings;
 	settings.bindAddresses = ["0.0.0.0"];

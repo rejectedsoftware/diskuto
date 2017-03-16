@@ -7,6 +7,7 @@ import core.time : Duration, minutes;
 
 
 class DiskutoSettings {
+	string resourcePath = "public/"; // Path to Diskutp's "public" folder
 	DiskutoBackend backend;
 	DiskutoUserStore userStore;
 	Json antispam;

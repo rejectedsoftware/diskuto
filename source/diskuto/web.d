@@ -5,6 +5,7 @@ import diskuto.userstore : DiskutoUserStore, StoredUser;
 import diskuto.settings : DiskutoSettings;
 
 import vibe.http.router : URLRouter;
+import vibe.http.fileserver : HTTPFileServerSettings, serveStaticFiles;
 import vibe.http.server : HTTPServerRequest, HTTPServerResponse;
 import vibe.web.web;
 
@@ -22,7 +23,15 @@ DiskutoWeb registerDiskutoWeb(URLRouter router, DiskutoBackend backend)
 DiskutoWeb registerDiskutoWeb(URLRouter router, DiskutoSettings settings)
 {
 	auto wi = new DiskutoWebInterface(settings);
-	router.registerWebInterface(wi);
+	
+	auto wsettings = new WebInterfaceSettings;
+	wsettings.urlPrefix = "diskuto";
+	router.registerWebInterface(wi, wsettings);
+	
+	auto fsettings = new HTTPFileServerSettings;
+	fsettings.serverPathPrefix = "/diskuto/";
+	router.get("/diskuto/*", serveStaticFiles(settings.resourcePath, fsettings));
+	
 	return DiskutoWeb(wi);
 }
 
@@ -60,7 +69,6 @@ struct DiskutoWeb {
 	}
 }
 
-@path("diskuto")
 private final class DiskutoWebInterface {
 	import antispam.antispam;
 	import diskuto.internal.webutils : SessionVars, User;

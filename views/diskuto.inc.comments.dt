@@ -73,14 +73,17 @@
 					- renderCommentRec(topic, web, usr, c);
 
 - void includeDiskuto(DiskutoWeb web, string topic)
+	- import vibe.data.json : Json;
+
 	.diskuto
 		- auto ctx = getCommentsContext(req, web, topic);
 		- auto usr = ctx.user;
+		- auto base_url = req.rootDir ~ "diskuto";
 
-		style @import url('#{req.rootDir}diskuto.css');
-		script(src="#{req.rootDir}diskuto.js")
-		script window.diskutoBaseURL = "#{req.rootDir}diskuto";
-		noscript: style @import url('#{req.rootDir}diskuto-noscript.css');
+		style @import url('#{base_url}/diskuto.css');
+		script(src="#{base_url}/diskuto.js")
+		script window.diskutoBaseURL = #{Json(base_url)};
+		noscript: style @import url('#{base_url}/diskuto-noscript.css');
 
 		p& #{ctx.commentCount} comments
 
