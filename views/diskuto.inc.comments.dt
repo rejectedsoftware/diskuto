@@ -6,15 +6,16 @@
 - import fuzzydate : toFuzzyDate;
 
 - void commentForm(string topic, ref User user, Comment* comment)
-	form.reply-form(method="POST", action="#{req.rootDir}diskuto", onSubmit="return confirmReply(this)")
-		input(type="hidden", name="topic", value=topic)
-		input(type="hidden", name="reply_to", value=comment ? comment.id : "")
-		- auto ph = comment ? trWeb("Type here to reply.") : trWeb("Type here to leave a comment.");
-		textarea(name="text", rows=3, placeholder=ph, onfocus="updateFormSnap(this)", onblur="updateFormSnap(this)", onchange="updateFormSnap(this)", onkeydown="updateFormSnap(this)", onkeyup="updateFormSnap(this)", autocomplete="off")
-		input(type="text", name="name", value=user.name, placeholder=trWeb("Name (optional)"), disabled=user.registered)
-		input(type="text", name="email", value=user.email, placeholder=trWeb("Email (optional)"), title=trWeb("Used for notifications and avatar image only"), disabled=user.registered)
-		input(type="text", name="website", value=user.website, placeholder=trWeb("Website (optional)"), disabled=user.registered)
-		button(type="submit")& Submit
+	- if (user.role >= StoredUser.Role.commenter)
+		form.reply-form(method="POST", action="#{req.rootDir}diskuto", onSubmit="return confirmReply(this)")
+			input(type="hidden", name="topic", value=topic)
+			input(type="hidden", name="reply_to", value=comment ? comment.id : "")
+			- auto ph = comment ? trWeb("Type here to reply.") : trWeb("Type here to leave a comment.");
+			textarea(name="text", rows=3, placeholder=ph, onfocus="updateFormSnap(this)", onblur="updateFormSnap(this)", onchange="updateFormSnap(this)", onkeydown="updateFormSnap(this)", onkeyup="updateFormSnap(this)", autocomplete="off")
+			input(type="text", name="name", value=user.name, placeholder=trWeb("Name (optional)"), disabled=user.registered)
+			input(type="text", name="email", value=user.email, placeholder=trWeb("Email (optional)"), title=trWeb("Used for notifications and avatar image only"), disabled=user.registered)
+			input(type="text", name="website", value=user.website, placeholder=trWeb("Website (optional)"), disabled=user.registered)
+			button(type="submit")& Submit
 
 - void renderCommentRec(string topic, DiskutoWeb web, ref User usr, Comment* comment)
 	.comment(id=comment.id)
@@ -69,15 +70,16 @@
 			- bool vote_disabled = have_upvoted || have_downvoted || comment.author == usr.id;
 			- auto vote_total = cast(long)comment.upvotes.length - cast(long)comment.downvotes.length;
 			
-			form.vote-up(method="POST", action="#{req.rootDir}diskuto/up", onSubmit="return vote(this, 1)")
-				input(type="hidden", name="id", value=comment.id)
-				button(type="submit", disabled=vote_disabled, class=have_upvoted ? "chosen" : "") ▲
-			.vote-count(class=vote_total<0?"neg":vote_total>0?"pos":"bal")= vote_total
-			form.vote-down(method="POST", action="#{req.rootDir}diskuto/down", onSubmit="return vote(this, -1)")
-				input(type="hidden", name="id", value=comment.id)
-				button(type="submit", disabled=vote_disabled, class=have_downvoted ? "chosen" : "") ▼
+			- if (usr.role >= StoredUser.Role.member)
+				form.vote-up(method="POST", action="#{req.rootDir}diskuto/up", onSubmit="return vote(this, 1)")
+					input(type="hidden", name="id", value=comment.id)
+					button(type="submit", disabled=vote_disabled, class=have_upvoted ? "chosen" : "") ▲
+				.vote-count(class=vote_total<0?"neg":vote_total>0?"pos":"bal")= vote_total
+				form.vote-down(method="POST", action="#{req.rootDir}diskuto/down", onSubmit="return vote(this, -1)")
+					input(type="hidden", name="id", value=comment.id)
+					button(type="submit", disabled=vote_disabled, class=have_downvoted ? "chosen" : "") ▼
 			
-			- if (comment.author == usr.id && comment.age < web.settings.softEditTimeLimit || usr.isModerator)
+			- if (usr.role >= StoredUser.Role.commenter && comment.author == usr.id && comment.age < web.settings.softEditTimeLimit || usr.isModerator)
 				button.edit-button(type="button", onClick="showEdit(this)")& Edit
 				button.delete-button(type="button", onClick="showDelete(this)")& Delete
 
