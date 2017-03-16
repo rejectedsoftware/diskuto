@@ -24,9 +24,10 @@ class MongoDBBackend : DiskutoBackend {
 		m_comments = db["comments"];
 
 		// upgrade "author" field name
-		foreach (c; m_comments.find(["userID": ["$exists": true]], ["userID": true])) {
+		foreach (c; m_comments.find(["userID": ["$exists": true]], ["userID": true]))
 			m_comments.update(["_id": c["_id"]], ["$unset": ["userID": Bson(null)], "$set": ["author": c["userID"]]]);
-		}
+		// upgrade missing "clientAddress" field name
+		m_comments.update(["clientAddress": ["$exists": false]], ["$set": ["clientAddress": ""]], UpdateFlags.multiUpdate);
 	}
 
 	StoredComment.ID postComment(StoredComment comment)
@@ -72,6 +73,12 @@ class MongoDBBackend : DiskutoBackend {
 		m_comments.update(Q(BsonObjectID.fromString(id), DQ(user), DQ(user)), ["$addToSet": ["downvotes": user]]);
 	}
 
+	uint getActiveCommentCount(string topic)
+	{
+		import std.conv : to;
+		return m_comments.count(["topic": topic, "status": "active"]).to!uint;
+	}
+
 	StoredComment[] getCommentsForTopic(string topic)
 	{
 		return m_comments.find!(MongoStruct!StoredComment)(["topic": topic]).map!(c => cast(StoredComment)c).array;
@@ -84,7 +91,7 @@ class MongoDBBackend : DiskutoBackend {
 }
 
 // Converts a string "id" field to a BsonObjectID "_id" field for storage in a MongoDB collection
-private struct MongoStruct(T) {
+struct MongoStruct(T) {
 	import std.format : format;
 	import std.traits : FieldTypeTuple, FieldNameTuple;
 

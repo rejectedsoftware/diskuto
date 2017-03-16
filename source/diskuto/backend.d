@@ -14,6 +14,7 @@ interface DiskutoBackend {
 	void deleteComment(StoredComment.ID id);
 	void upvote(StoredComment.ID id, StoredComment.UserID user);
 	void downvote(StoredComment.ID id, StoredComment.UserID user);
+	uint getActiveCommentCount(string topic);
 	StoredComment[] getCommentsForTopic(string topic);
 	StoredComment[] getLatestComments();
 }
@@ -26,6 +27,7 @@ struct StoredComment {
 	string topic;
 	ID replyTo;
 	UserID author;
+	string clientAddress; // Client IP address
 	string name;
 	string email;
 	string website;

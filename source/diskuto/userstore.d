@@ -13,7 +13,7 @@ interface DiskutoUserStore {
 struct StoredUser {
 	alias ID = string;
 
-	ID id; // store specific ID prefixed with a store identifier (e.g. "userman-12315235234")
+	ID id; // store specific ID prefixed with a store identifier (e.g. "userman-mongodb-12315235234")
 	string name; // Display name
 	string email; // e-mail address
 	string website; // website URL
