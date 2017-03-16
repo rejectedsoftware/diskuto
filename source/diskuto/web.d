@@ -51,6 +51,13 @@ struct DiskutoWeb {
 			m_web.m_userID = format("%016X%016X", uniform!ulong(), uniform!ulong());
 		}
 	}
+
+	void generateInclude(R)(R dst, HTTPServerRequest req, string topic)
+	{
+		import diet.html : compileHTMLDietFile;
+		DiskutoWeb web = this;
+		dst.compileHTMLDietFile!("diskuto.part.comments.dt", req, web, topic);
+	}
 }
 
 @path("diskuto")
@@ -275,9 +282,12 @@ private final class DiskutoWebInterface {
 
 	private User getUser(HTTPServerRequest req)
 	{
-		auto usr = m_settings.userStore.getLoggedInUser(req);
-		if (!usr.isNull)
-			return User(usr, true);
+		if (m_settings.userStore) {
+			auto usr = m_settings.userStore.getLoggedInUser(req);
+			if (!usr.isNull)
+				return User(usr, true);
+		}
+		
 		enforce(m_userID.length, "Unauthorized request. Please make sure that your browser supports cookies.");
 		User ret;
 		ret.registered = false;

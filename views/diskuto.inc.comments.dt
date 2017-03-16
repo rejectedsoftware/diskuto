@@ -21,7 +21,7 @@
 		- import diskuto.avatar : generateAvatar;
 		- import std.algorithm.searching : canFind;
 
-		- generateAvatar(&_diet_output, comment.avatarID);
+		- generateAvatar(_diet_output, comment.avatarID);
 		.right
 			- if (comment.website.length && comment.name.length)
 				a.author(href=comment.website)= comment.name

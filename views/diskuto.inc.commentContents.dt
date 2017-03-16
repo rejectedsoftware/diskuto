@@ -1,4 +1,3 @@
 .contents
 	- import vibe.textfilter.markdown;
-	- auto outp = &_diet_output;
-	- outp.filterMarkdown(comment.text, MarkdownFlags.forumDefault);
+	- _diet_output.filterMarkdown(comment.text, MarkdownFlags.forumDefault);
