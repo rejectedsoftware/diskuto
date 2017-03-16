@@ -91,6 +91,8 @@ auto getCommentsContext(HTTPServerRequest req, DiskutoWeb web, string topic)
 		}
 
 		static double getScore(Comment* c) {
+			import std.algorithm.comparison : among;
+			
 			// basic sortig based on the ratio of up and downvotes
 			double score = (c.upvotes.length + 1.0) / (c.downvotes.length + 1.0);
 
@@ -99,6 +101,9 @@ auto getCommentsContext(HTTPServerRequest req, DiskutoWeb web, string topic)
 			// negative comments will only get a boost for around an hour
 			if (score < 1.0) score += 0.5 / (c.age.total!"seconds" / (60.0 * 60));
 			else score += 0.5 / (c.age.total!"seconds" / (2.0 * 60 * 60));
+
+			if (!c.status.among(CommentStatus.active, CommentStatus.awaitsModeration))
+				score -= 1000;
 
 			return score;
 		}
