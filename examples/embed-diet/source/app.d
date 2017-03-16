@@ -1,4 +1,5 @@
 import vibe.core.core : runApplication;
+import vibe.data.json : parseJsonString;
 import vibe.http.fileserver : serveStaticFiles;
 import vibe.http.router : URLRouter;
 import vibe.http.server : HTTPServerRequest, HTTPServerSettings, listenHTTP;
@@ -87,7 +88,7 @@ void main()
 	auto dsettings = new DiskutoSettings;
 	dsettings.backend = new MongoDBBackend("mongodb://127.0.0.1/diskuto");
 	dsettings.userStore = new ExampleUserStore;
-	dsettings.antispam = parseJsonString(readFileUTF8("antispam.json"));
+	dsettings.antispam = parseJsonString(`[{"filter": "blacklist", "settings": {"words": ["sex", "drugs", "rock", "roll"]}}]`);
 	dsettings.resourcePath = "../../public";
 
 	auto router = new URLRouter;
