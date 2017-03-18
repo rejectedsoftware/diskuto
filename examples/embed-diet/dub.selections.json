@@ -1,7 +1,7 @@
 {
 	"fileVersion": 1,
 	"versions": {
-		"antispam": "0.1.0",
+		"antispam": "0.1.2",
 		"diet-ng": "1.2.0+commit.1.g206d498",
 		"diskuto": {"path":"../.."},
 		"fuzzydate": "1.0.0",

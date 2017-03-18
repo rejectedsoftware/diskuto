@@ -82,14 +82,22 @@ class MongoDBCommentStore : DiskutoCommentStore {
 		return m_comments.count(["topic": topic, "status": "active"]).to!uint;
 	}
 
-	StoredComment[] getCommentsForTopic(string topic)
+	void iterateAllComments(scope void delegate(ref StoredComment) del)
 	{
-		return m_comments.find!(MongoStruct!StoredComment)(["topic": topic]).map!(c => cast(StoredComment)c).array;
+		foreach (StoredComment c; m_comments.find!(MongoStruct!StoredComment)().map!(c => cast(StoredComment)c))
+			del(c);
 	}
 
-	StoredComment[] getLatestComments()
+	void iterateCommentsForTopic(string topic, scope void delegate(ref StoredComment) del)
 	{
-		return m_comments.find!(MongoStruct!StoredComment)().sort(["time": -1]).limit(100).map!(c => cast(StoredComment)c).array;
+		foreach (c; m_comments.find!(MongoStruct!StoredComment)(["topic": topic]).map!(c => cast(StoredComment)c))
+			del(c);
+	}
+
+	void iterateLatestComments(scope void delegate(ref StoredComment) del)
+	{
+		foreach (c; m_comments.find!(MongoStruct!StoredComment)().sort(["time": -1]).limit(100).map!(c => cast(StoredComment)c))
+			del(c);
 	}
 }
 

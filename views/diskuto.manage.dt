@@ -1,0 +1,16 @@
+doctype html
+head
+	title& Diskuto Management
+body
+	section
+		- if (error.length)
+			.error= error
+
+		h2 Spam filter
+		
+		h3 Reclassify spam messages.
+		p This will reset self-learning spam filters and run all existing messages through them to let them re-learn the basic classification. Running this can be necessary after the spam filter chain has been reconfigured. Note that this may take a while to finish.
+		form(method="POST", action="#{base}/manage/reclassify_spam", disabled=reclassifyInProgress)
+			button(type="submit") Reclassify
+		- if (reclassifyInProgress)
+			p The reclassification is currently in progress.

@@ -15,8 +15,9 @@ interface DiskutoCommentStore {
 	void upvote(StoredComment.ID id, StoredComment.UserID user);
 	void downvote(StoredComment.ID id, StoredComment.UserID user);
 	uint getActiveCommentCount(string topic);
-	StoredComment[] getCommentsForTopic(string topic);
-	StoredComment[] getLatestComments();
+	void iterateAllComments(scope void delegate(ref StoredComment) del);
+	void iterateCommentsForTopic(string topic, scope void delegate(ref StoredComment) del);
+	void iterateLatestComments(scope void delegate(ref StoredComment) del);
 }
 
 deprecated("Use DiskutoCommentStore instead.") alias DiskutoBackend = DiskutoCommentStore;

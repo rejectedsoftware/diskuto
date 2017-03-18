@@ -10,6 +10,8 @@ import vibe.http.fileserver : HTTPFileServerSettings, serveStaticFiles;
 import vibe.http.server : HTTPServerRequest, HTTPServerResponse;
 import vibe.web.web;
 
+import antispam.antispam : AntispamState, AntispamMessage, SpamAction, filterMessage;
+
 import std.exception : enforce;
 import std.typecons : Nullable;
 
@@ -23,23 +25,33 @@ DiskutoWeb registerDiskutoWeb(URLRouter router, DiskutoCommentStore comment_stor
 
 DiskutoWeb registerDiskutoWeb(URLRouter router, DiskutoSettings settings)
 {
-	auto wi = new DiskutoWebInterface(settings);
-	
+	auto antispam = new AntispamState;
+	antispam.loadConfig(settings.antispam);
+
 	auto wsettings = new WebInterfaceSettings;
 	wsettings.urlPrefix = "/diskuto";
-	router.registerWebInterface(wi, wsettings);
+	router.registerWebInterface(new DiskutoWebInterface(settings, antispam), wsettings);
+	router.registerWebInterface(new DiskutoWebManagementInterface(settings, antispam), wsettings);
 	
 	auto fsettings = new HTTPFileServerSettings;
 	fsettings.serverPathPrefix = "/diskuto/";
 	router.get("/diskuto/*", serveStaticFiles(settings.resourcePath, fsettings));
 	
-	return DiskutoWeb(wi);
+	return DiskutoWeb(settings);
 }
 
 struct DiskutoWeb {
-	private DiskutoWebInterface m_web;
+	private {
+		DiskutoSettings m_settings;
+		SessionVar!(string, SessionVars.userID) m_userID;
+	}
 
-	package @property DiskutoCommentStore commentStore() { return m_web.m_settings.commentStore; }
+	this(DiskutoSettings settings)
+	{
+		m_settings = settings;
+	}
+
+	package @property DiskutoCommentStore commentStore() { return m_settings.commentStore; }
 
 	string getBasePath(string root_path = "/")
 	{
@@ -48,13 +60,13 @@ struct DiskutoWeb {
 
 	@property string uid()
 	{
-		assert(m_web.m_userID.length, "No UID, setupRequest() not called?");
-		return m_web.m_userID;
+		assert(m_userID.length, "No UID, setupRequest() not called?");
+		return m_userID;
 	}
 
 	@property DiskutoSettings settings()
 	{
-		return m_web.m_settings;
+		return m_settings;
 	}
 
 	void setupRequest(HTTPServerRequest req, HTTPServerResponse res)
@@ -72,11 +84,11 @@ struct DiskutoWeb {
 
 	void setupRequest()
 	{
-		if (!m_web.m_userID.length) {
+		if (!m_userID.length) {
 			import std.format : format;
 			import std.random : uniform;
 			// TODO: Use a cryptographic RNG from vibe.crypto.random. Not _really_ needed, but best practice anyway.
-			m_web.m_userID = format("%016X%016X", uniform!ulong(), uniform!ulong());
+			m_userID = format("%016X%016X", uniform!ulong(), uniform!ulong());
 		}
 	}
 
@@ -89,8 +101,74 @@ struct DiskutoWeb {
 	}
 }
 
+@path("manage")
+private final class DiskutoWebManagementInterface {
+	private {
+		DiskutoSettings m_settings;
+		AntispamState m_antispam;
+		bool m_reclassifyInProgress = false;
+		string m_reclassifyError = null;
+	}
+
+	this(DiskutoSettings settings, AntispamState antispam)
+	{
+		m_settings = settings;
+		m_antispam = antispam;
+	}
+
+	void get(HTTPServerRequest req, string _error = null)
+	{
+		auto usr = getUser(req, m_settings, null);
+		enforce(usr.role >= StoredUser.Role.moderator,
+			"Not authorized to manage comments.");
+
+		auto web = DiskutoWeb(m_settings);
+		bool reclassifyInProgress = m_reclassifyInProgress;
+		string base = web.getBasePath(req.rootDir);
+		string error = _error.length ? _error : m_reclassifyError;
+		render!("diskuto.manage.dt", reclassifyInProgress, base, error);
+	}
+
+	@errorDisplay!get
+	void reclassifySpam(HTTPServerRequest req)
+	{
+		import vibe.core.core : runTask, yield;
+
+		auto usr = getUser(req, m_settings, null);
+		enforce(usr.role >= StoredUser.Role.moderator,
+			"Not authorized to manage comments.");
+
+		enforce(!m_reclassifyInProgress, "Spam reclassification is still in progress.");
+		m_reclassifyInProgress = true;
+		scope (exit) m_reclassifyInProgress = false;
+		m_reclassifyError = null;
+
+		runTask({
+			try {
+				m_antispam.resetClassification();
+				m_settings.commentStore.iterateAllComments((ref c) {
+					AntispamMessage msg;
+					c.convertToAntispam(msg, m_antispam);
+
+					final switch (c.status) with (StoredComment.Status) {
+						case active: m_antispam.classify(msg, false); break;
+						case disabled: // ignore
+						case awaitsModeration: // ignore
+						case spam: m_antispam.classify(msg, true); break;
+						case deleted: break; // ignore
+					}
+					yield();
+				});
+			} catch (Exception e) {
+				m_reclassifyError = e.msg;
+			}
+		});
+
+		redirect(DiskutoWeb(m_settings).getBasePath(req.rootDir)~"/manage");
+	}
+}
+
 private final class DiskutoWebInterface {
-	import antispam.antispam;
 	import diskuto.internal.webutils : User;
 
 	private {
@@ -103,20 +181,16 @@ private final class DiskutoWebInterface {
 		SessionVar!(string, SessionVars.lastPost) m_sessionLastPost;
 	}
 
-	this(DiskutoSettings settings)
+	this(DiskutoSettings settings, AntispamState antispam)
 	{
-		import vibe.core.file : readFileUTF8;
-		import vibe.data.json : parseJsonString;
-
 		m_settings = settings;
-		m_antispam = new AntispamState;
-		m_antispam.loadConfig(settings.antispam);
+		m_antispam = antispam;
 	}
 
 	@errorDisplay!sendWebError
 	void post(HTTPServerRequest req, string name, string email, string website, string topic, string reply_to, string text)
 	{
-		doPost(req, getUser(req, topic), name, email, website, topic, reply_to, text);
+		doPost(req, getUser(req, m_settings, topic), name, email, website, topic, reply_to, text);
 		redirectBack(req);
 	}
 
@@ -124,7 +198,7 @@ private final class DiskutoWebInterface {
 	void up(HTTPServerRequest req, string id)
 	{
 		auto topic = m_settings.commentStore.getComment(id).topic; // TODO: be more efficient here!
-		auto usr = getUser(req, topic);
+		auto usr = getUser(req, m_settings, topic);
 		m_settings.commentStore.upvote(id, usr.id);
 		redirectBack(req);
 	}
@@ -133,16 +207,18 @@ private final class DiskutoWebInterface {
 	void down(HTTPServerRequest req, string id)
 	{
 		auto topic = m_settings.commentStore.getComment(id).topic; // TODO: be more efficient here!
-		auto usr = getUser(req, topic);
+		auto usr = getUser(req, m_settings, topic);
 		m_settings.commentStore.downvote(id, usr.id);
 		redirectBack(req);
 	}
 
 	@errorDisplay!sendWebError
-	void getRenderTopic(string topic, string base)
+	void getRenderTopic(HTTPServerRequest req, string topic, string base)
 	{
-		auto web = DiskutoWeb(this);
+		auto web = DiskutoWeb(m_settings);
 		web.setupRequest();
+		auto usr = getUser(req, m_settings, topic);
+		enforce(usr.role >= StoredUser.Role.reader, "Not allowed to read topic.");
 		render!("diskuto.part.comments.dt", web, base, topic);
 	}
 
@@ -150,7 +226,7 @@ private final class DiskutoWebInterface {
 	void postPost(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto data = req.json;
-		auto comment = doPost(req, getUser(req, data["topic"].get!string),
+		auto comment = doPost(req, getUser(req, m_settings, data["topic"].get!string),
 			data["name"].get!string,
 			data["email"].get!string,
 			data["website"].get!string,
@@ -176,7 +252,7 @@ private final class DiskutoWebInterface {
 		auto id = data["id"].get!string;
 		auto text = data["text"].get!string;
 		auto comment = m_settings.commentStore.getComment(id);
-		auto usr = getUser(req, comment.topic);
+		auto usr = getUser(req, m_settings, comment.topic);
 
 		enforceAuthorizedToEdit(req, comment, usr);
 		enforce(text.length < 4096, "Message text is too long.");
@@ -199,7 +275,7 @@ private final class DiskutoWebInterface {
 		auto data = req.json;
 		auto id = data["id"].get!string;
 		auto comment = m_settings.commentStore.getComment(id);
-		auto usr = getUser(req, comment.topic);
+		auto usr = getUser(req, m_settings, comment.topic);
 
 		enforceAuthorizedToEdit(req, comment, usr);
 
@@ -217,11 +293,29 @@ private final class DiskutoWebInterface {
 		auto data = req.json;
 		auto id = data["id"].get!string;
 		auto status = data["status"].get!string.to!(StoredComment.Status);
-		auto topic = m_settings.commentStore.getComment(id).topic; // TODO: be more efficient here!
-		auto usr = getUser(req, topic);
+		auto comment = m_settings.commentStore.getComment(id);
+		auto usr = getUser(req, m_settings, comment.topic);
 		enforce(usr.isModerator, "Only moderators can change the comment status.");
 
-		m_settings.commentStore.setCommentStatus(id, status);
+		if (comment.status != status) {
+			m_settings.commentStore.setCommentStatus(id, status);
+
+			// reclassify spam status
+			if (comment.status == StoredComment.Status.spam || status == StoredComment.Status.spam) {
+				AntispamMessage msg;
+				comment.convertToAntispam(msg, m_antispam);
+				switch (comment.status) {
+					default: break;
+					case StoredComment.Status.spam: m_antispam.declassify(msg, true); break;
+					case StoredComment.Status.active: m_antispam.declassify(msg, false); break;
+				}
+				switch (status) {
+					default: break;
+					case StoredComment.Status.spam: m_antispam.classify(msg, true); break;
+					case StoredComment.Status.active: m_antispam.classify(msg, false); break;
+				}
+			}
+		}
 
 		static struct Reply { bool success = true; }
 		res.writeJsonBody(Reply.init);
@@ -234,7 +328,7 @@ private final class DiskutoWebInterface {
 		auto dir = cmd["dir"].get!int;
 		auto id = cmd["id"].get!string;
 		auto topic = m_settings.commentStore.getComment(id).topic; // TODO: be more efficient here!
-		auto usr = getUser(req, topic);
+		auto usr = getUser(req, m_settings, topic);
 		enforce(usr.role >= StoredUser.Role.member, "Not allowed to vote!");
 
 		if (dir > 0) m_settings.commentStore.upvote(id, usr.id);
@@ -243,17 +337,21 @@ private final class DiskutoWebInterface {
 	}
 
 	@errorDisplay!sendJsonError
-	void getTopic(HTTPServerResponse res, string topic)
+	void getTopic(HTTPServerRequest req, HTTPServerResponse res, string topic)
 	{
 		static struct S { bool success; StoredComment[] comments; }
-		res.writeJsonBody(S(true, m_settings.commentStore.getCommentsForTopic(topic)));
+		auto usr = getUser(req, m_settings, topic);
+		enforce(usr.role >= StoredUser.Role.reader, "Not allowed to read topic.");
+		res.streamComments!(del => m_settings.commentStore.iterateCommentsForTopic(topic, del));
 	}
 
 	@errorDisplay!sendJsonError
-	void getLatestComments(HTTPServerResponse res)
+	void getLatestComments(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		static struct S { bool success; StoredComment[] comments; }
-		res.writeJsonBody(S(true, m_settings.commentStore.getLatestComments()));
+		auto usr = getUser(req, m_settings, null);
+		enforce(usr.role >= StoredUser.Role.moderator, "Only moderaters are allowed to read recent comments.");
+		res.streamComments!(del => m_settings.commentStore.iterateLatestComments(del));
 	}
 
 	@noRoute
@@ -319,7 +417,6 @@ private final class DiskutoWebInterface {
 		comment.website = website;
 		comment.text = text;
 		comment.time = Clock.currTime(UTC());
-		comment.id = m_settings.commentStore.postComment(comment);
 
 		bool is_spam_async = false;
 
@@ -328,6 +425,8 @@ private final class DiskutoWebInterface {
 				m_settings.commentStore.setCommentStatus(comment.id, StoredComment.Status.spam);
 			is_spam_async = true;
 		});
+
+		comment.id = m_settings.commentStore.postComment(comment);
 
 		m_sessionLastPost = comment.id;
 
@@ -350,30 +449,6 @@ private final class DiskutoWebInterface {
 		redirect(url);
 	}
 
-	private User getUser(HTTPServerRequest req, string topic)
-	{
-		User ret;
-
-		if (m_settings.userStore) {
-			auto usr = m_settings.userStore.getLoggedInUser(req);
-			if (!usr.isNull) {
-				ret.user = usr;
-				ret.registered = true;
-				ret.role = m_settings.userStore.getUserRole(usr.id, topic);
-				return ret;
-			}
-		}
-
-		enforce(m_userID.length, "Unauthorized request. Please make sure that your browser supports cookies.");
-		ret.id = m_userID;
-		ret.registered = false;
-		ret.role = m_settings.userStore ? m_settings.userStore.getUserRole(ret.id, topic) : StoredUser.Role.member;
-		ret.name = m_sessionName;
-		ret.email = m_sessionEmail;
-		ret.website = m_sessionWebsite;
-		return ret;
-	}
-
 	private string renderComment(HTTPServerRequest req, StoredComment scomment)
 	{
 		import std.datetime : Clock, UTC;
@@ -384,7 +459,7 @@ private final class DiskutoWebInterface {
 
 		auto c = Comment(scomment, Clock.currTime(UTC()));
 		auto comment = &c;
-		auto web = DiskutoWeb(this);
+		auto web = DiskutoWeb(m_settings);
 		auto ctx = getCommentsContext(req, web, null);
 		auto usr = ctx.user;
 		auto dst = appender!string();
@@ -407,20 +482,15 @@ private final class DiskutoWebInterface {
 	private void checkSpamState(HTTPServerRequest req, StoredComment comment, void delegate() @safe revoke)
 	{
 		import std.algorithm.comparison : among;
-		import std.algorithm.iteration : map, splitter;
-		import std.array : array;
-		import std.string : strip;
 
 		AntispamMessage msg;
-		msg.headers["From"] = comment.name.length ? comment.email.length ? comment.name ~ " <" ~ comment.email ~ ">" : comment.name : comment.email;
-		msg.headers["Subject"] = comment.website; // TODO: maybe use a different header
-		msg.message = cast(const(ubyte)[])comment.text;
-		msg.peerAddress = comment.clientAddress.splitter(',').map!strip.array;
+		comment.convertToAntispam(msg, m_antispam);
 
 		m_antispam.filterMessage!(
 			(status) {
-				if (status.among(SpamAction.revoke, SpamAction.block))
+				if (status.among(SpamAction.revoke, SpamAction.block)) {
 					throw new Exception("Your message has been deemed abusive!");
+				}
 			},
 			(async_status) {
 				if (async_status.among!(SpamAction.revoke, SpamAction.block))
@@ -449,11 +519,64 @@ private final class DiskutoWebInterface {
 	}
 }
 
+private void streamComments(alias iterator)(HTTPServerResponse res)
+{
+	res.contentType = "application/json; charset=UTF-8";
+	res.bodyWriter.write(`{"success": true, [`);
+	iterator(delegate void(ref StoredComment c) {
+		import vibe.data.json : serializeToJson;
+		import vibe.stream.wrapper : StreamOutputRange;
+		auto r = StreamOutputRange(res.bodyWriter);
+		(&r).serializeToJson(c);
+	});
+	res.bodyWriter.write(`]}`);
+}
+
 private void writeSuccess(HTTPServerResponse res)
 {
 	static struct S { bool success; }
 	res.writeJsonBody(S(true));
 }
+
+private void convertToAntispam(in ref StoredComment comment, ref AntispamMessage msg, AntispamState antispam)
+{
+	import std.algorithm.iteration : map, splitter;
+	import std.array : array;
+	import std.string : strip;
+
+	msg.headers["From"] = comment.name.length ? comment.email.length ? comment.name ~ " <" ~ comment.email ~ ">" : comment.name : comment.email;
+	msg.headers["Subject"] = comment.website; // TODO: maybe use a different header
+	msg.message = cast(const(ubyte)[])comment.text;
+	msg.peerAddress = comment.clientAddress.splitter(',').map!strip.array;
+}
+
+private User getUser(HTTPServerRequest req, DiskutoSettings settings, string topic)
+{
+	User ret;
+
+	if (settings.userStore) {
+		auto usr = settings.userStore.getLoggedInUser(req);
+		if (!usr.isNull) {
+			ret.user = usr;
+			ret.registered = true;
+			ret.role = settings.userStore.getUserRole(usr.id, topic);
+			return ret;
+		}
+	}
+
+	if (req.session) {
+		ret.id = req.session.get!string(SessionVars.userID);
+		ret.name = req.session.get!string(SessionVars.name, null);
+		ret.email = req.session.get!string(SessionVars.email, null);
+		ret.website = req.session.get!string(SessionVars.website, null);
+	}
+
+	enforce(ret.id.length, "Unauthorized request. Please make sure that your browser supports cookies.");
+	ret.registered = false;
+	ret.role = settings.userStore ? settings.userStore.getUserRole(ret.id, topic) : StoredUser.Role.member;
+	return ret;
+}
+
 
 /*private struct ValidURL {
 	import vibe.inet.url : URL;

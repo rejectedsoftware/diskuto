@@ -7,5 +7,5 @@ dependency "vibe-d:mongodb" version="~>0.7.30"
 dependency "vibe-d:web" version="~>0.7.30"
 dependency "diet-ng" version="~>1.2"
 dependency "fuzzydate" version="~>1.0.0"
-dependency "antispam" version="~>0.1.0"
+dependency "antispam" version="~>0.1.2"
 copyFiles "public" // copy resources into dependent projects

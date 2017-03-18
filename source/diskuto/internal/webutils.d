@@ -60,6 +60,7 @@ auto getCommentsContext(HTTPServerRequest req, DiskutoWeb web, string topic)
 	import std.datetime : Clock, UTC;
 	import std.algorithm.searching : count;
 	import std.algorithm.sorting : sort;
+	import std.array : appender;
 
 	auto backend = web.commentStore;
 
@@ -73,25 +74,35 @@ auto getCommentsContext(HTTPServerRequest req, DiskutoWeb web, string topic)
 
 	Info ret;
 	if (topic.length) {
-		auto dbcomments = backend.getCommentsForTopic(topic);
-		auto comments = new Comment[](dbcomments.length);
-		size_t curidx;
-		ret.commentCount = dbcomments.count!(c => c.status == StoredComment.Status.active);
+		auto comments = appender!(Comment[]);
+		size_t curidx = 0;
 		size_t[StoredComment.ID] map;
-		foreach (c; dbcomments) {
-			auto idx = curidx++;
-			map[c.id] = idx;
-			comments[idx] = Comment(c, now);
-		}
+		backend.iterateCommentsForTopic(topic, (ref c) {
+			map[c.id] = curidx++;
+			comments ~= Comment(c, now);
+		});
 
-		foreach (ref c; comments) {
+		// build up the reply tree
+		foreach (ref c; comments.data) {
 			if (!c.replyTo.length) ret.comments ~= &c;
 			else {
 				if (auto rti = c.replyTo in map)
-					comments[*rti].replies ~= &c;
+					comments.data[*rti].replies ~= &c;
 			}
 		}
 
+		// count the number of visible comments
+		void countRec(in Comment* c) {
+			if (c.status == StoredComment.Status.active) {
+				ret.commentCount++;
+				foreach (r; c.replies)
+					countRec(r);
+			}
+		}
+		foreach (c; ret.comments)
+			countRec(c);
+
+		// sort by score
 		static double getScore(Comment* c) {
 			import std.algorithm.comparison : among;
 
