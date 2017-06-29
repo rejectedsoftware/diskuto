@@ -15,6 +15,7 @@ Diskuto is a lightweight embeddable comment system made for integration with vib
 - Minimum functionality also works with JavaScript disabled
 - Adjusts to the enclosing page's font family, color and size
 
+[![DUB Package](https://img.shields.io/dub/v/diskuto.svg)](https://code.dlang.org/packages/diskuto)
 [![Build Status](https://travis-ci.org/rejectedsoftware/diskuto.svg?branch=master)](https://travis-ci.org/rejectedsoftware/diskuto)
 
 This is how it looks:
