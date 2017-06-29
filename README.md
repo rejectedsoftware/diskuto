@@ -2,7 +2,7 @@
 
 # Diskuto - an embeddable comment system
 
-Diskuto is a lightweight embeddable comment system made for integration with vibe.d sites. Its features include:
+Diskuto is a lightweight embeddable comment system made for integration in existing websites. Its features include:
 
 - Tree structured replies
 - No user registration required
@@ -14,6 +14,8 @@ Diskuto is a lightweight embeddable comment system made for integration with vib
 - Dynamic UI for replying, editing and deleting comments with JavaScript enabled
 - Minimum functionality also works with JavaScript disabled
 - Adjusts to the enclosing page's font family, color and size
+- JavaScript based integration into any website
+- Direct integration into vibe.d sites for the fastest load times possible
 
 [![DUB Package](https://img.shields.io/dub/v/diskuto.svg)](https://code.dlang.org/packages/diskuto)
 [![Build Status](https://travis-ci.org/rejectedsoftware/diskuto.svg?branch=master)](https://travis-ci.org/rejectedsoftware/diskuto)
