@@ -1,3 +1,5 @@
+![diskuto logo](http://rejectedsoftware.com/images/products/diskuto/product-icon.png)
+
 # Diskuto - an embeddable comment system
 
 Diskuto is a lightweight embeddable comment system made for integration with vibe.d sites. Its features include:
