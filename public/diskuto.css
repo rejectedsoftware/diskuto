@@ -8,7 +8,11 @@
 	color: black;
 	line-height: 1.5em;
 	border: 1px solid #ddd;
-	box-shadow: 0 0px 5px 0 #ddd;
+	height: 1.5em;
+}
+.diskuto input, .diskuto textarea, .diskuto .voting, .diskuto .avatar {
+	box-shadow: 0 0px 8px 0 #ddd;
+	box-shadow: 0 0px 8px 0 rgba(0, 0, 0, 0.15);
 }
 .diskuto pre {
 	line-height: 1.5em;
@@ -19,13 +23,13 @@
 .diskuto input, .diskuto textarea { background: white; }
 .diskuto input, .diskuto button { transition: all 0.3s ease; }
 .diskuto input:disabled { background-color: #eee; }
-.diskuto button { background-color: #f0f0f0; }
+.diskuto button { background: linear-gradient(#fff, #f4f4f4); }
 .diskuto button.chosen { color: #fa4; font-weight: bold; background-color: #888; }
 .diskuto button:active { border: 1px solid #bbb; background-color: #ddd; }
-.diskuto button:hover { border: 1px solid #bbb; background-color: #ccc; }
-.diskuto button:disabled { border: 1px solid #d8d8d8; background-color: #ddd; box-shadow: none; }
+.diskuto button:hover:enabled { border: 1px solid #bbb; background-color: #ccc; }
+.diskuto button:disabled { background: linear-gradient(#eee, #eee); }
 .diskuto .comment { display: flex; flex-wrap: wrap; margin-top: 1.5em; }
-.diskuto .avatar { margin-right: 0.5em; margin-bottom: 0.5em; border-radius: 5px; border: 1px solid #fff; box-shadow: 0 0 5px 0 #aaa; width: 48px; height: 48px; }
+.diskuto .avatar { margin-right: 0.5em; margin-bottom: 0.5em; border-radius: 5px; border: 1px solid #ddd; width: 48px; height: 48px; }
 .diskuto .comment .comment .avatar { width: 42px; height: 42px; }
 .diskuto .right { flex-grow: 1; flex-basis: 0; }
 .diskuto .author, .diskuto .date, .diskuto .comment-status { font-size: 80%; }
@@ -37,8 +41,12 @@
 .diskuto .comment-status { display: inline-block; color: red; }
 .diskuto .contents { overflow: auto; max-height: 50em; }
 .diskuto .error { color: red; }
-.diskuto .action-bar { display: flex; flex-wrap: nowrap; align-items: flex-start; flex-basis: 100%; flex-shrink: 0; }
-.diskuto .vote-count { border-left: none; border-right: none; transition: all 0.3s ease; }
+.diskuto .action-bar, .diskuto .voting { display: flex; flex-wrap: nowrap; align-items: flex-start; flex-shrink: 0; }
+.diskuto .action-bar { flex-basis: 100%; }
+.diskuto .vote-count { border-left: none; border-right: none; padding: 1pt 0.5em; transition: all 0.3s ease; z-index: -1; }
+.diskuto arrow { display: inline; font-size: 70%; line-height: inherit; color: #666; padding: 0 0.1em; }
+.diskuto arrow.up:before { content: "▲"; }
+.diskuto arrow.down:after { content: "▼"; }
 .diskuto .vote-count.pos { background-color: #efd; }
 .diskuto .vote-count.bal { width: 0; padding-left: 0; padding-right: 0; }
 .diskuto .vote-count.neg { background-color: #fdd; }

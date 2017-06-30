@@ -45,7 +45,7 @@ void generateSVGAvatar(R)(R dst, string id)
 		return ret;
 	}
 
-	int[3] bg = [220, 220, 220];
+	int[3] bg = [255, 255, 255];
 	int[3] fg = [uniform!(60, 180), uniform!(60, 180), uniform!(60, 180)];
 	int[3] fg2 = (fg[] + bg[]) / 2;
 
