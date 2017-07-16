@@ -62,18 +62,33 @@ class MongoDBCommentStore : DiskutoCommentStore {
 		m_comments.remove(["_id": BsonObjectID.fromString(id)]);
 	}
 
-	void upvote(StoredComment.ID id, StoredComment.UserID user)
+	VoteDirection vote(StoredComment.ID id, StoredComment.UserID user, VoteDirection direction)
 	{
-		static struct DQ { @name("$ne") string ne; }
-		static struct Q { BsonObjectID _id; DQ downvotes; DQ author; }
-		m_comments.update(Q(BsonObjectID.fromString(id), DQ(user), DQ(user)), ["$addToSet": ["upvotes": user]]);
-	}
+		// first see if an existing vote exists and needs to be neutralized
+		// {_id: BsonObjectID(...), $or: [{upvotes: {$elemMatch: {$eq: "..."}}}, {downvotes: {$elemMatch: {$eq: "..."}}}]}
+		static struct EQ { @name("$eq") string value; }
+		static struct C { @name("$elemMatch") EQ contains; }
+		static struct VU { C upvotes; }
+		static struct VD { C downvotes; }
+		static struct QC { BsonObjectID _id; @name("$or") Tuple!(VU, VD) or; }
+		QC any_vote_query;
+		any_vote_query._id = BsonObjectID.fromString(id);
+		any_vote_query.or[0].upvotes.contains.value = user;
+		any_vote_query.or[1].downvotes.contains.value = user;
+		string[string] pull;
+		if (direction != VoteDirection.up) pull["upvotes"] = user;
+		if (direction != VoteDirection.down) pull["downvotes"] = user;
+		if (!m_comments.findAndModify(any_vote_query, ["$pull": pull]).isNull)
+			return VoteDirection.none;
 
-	void downvote(StoredComment.ID id, StoredComment.UserID user)
-	{
-		static struct DQ { @name("$ne") string ne; }
-		static struct Q { BsonObjectID _id; DQ upvotes; DQ author; }
-		m_comments.update(Q(BsonObjectID.fromString(id), DQ(user), DQ(user)), ["$addToSet": ["downvotes": user]]);
+		// otherwise, set the vote
+		if (direction != VoteDirection.none) {
+			static struct DQ { @name("$ne") string ne; }
+			static struct Q { BsonObjectID _id; DQ downvotes; DQ author; }
+			m_comments.update(Q(BsonObjectID.fromString(id), DQ(user), DQ(user)), ["$addToSet": [direction == VoteDirection.up ? "upvotes" : "downvotes": user]]);
+		}
+
+		return direction;
 	}
 
 	uint getActiveCommentCount(string topic)

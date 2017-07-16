@@ -1,6 +1,6 @@
 module diskuto.web;
 
-import diskuto.commentstore : DiskutoCommentStore, StoredComment;
+import diskuto.commentstore : DiskutoCommentStore, StoredComment, VoteDirection;
 import diskuto.userstore : DiskutoUserStore, StoredUser;
 import diskuto.settings : DiskutoSettings;
 import diskuto.internal.webutils : SessionVars, User;
@@ -32,11 +32,11 @@ DiskutoWeb registerDiskutoWeb(URLRouter router, DiskutoSettings settings)
 	wsettings.urlPrefix = "/diskuto";
 	router.registerWebInterface(new DiskutoWebInterface(settings, antispam), wsettings);
 	router.registerWebInterface(new DiskutoWebManagementInterface(settings, antispam), wsettings);
-	
+
 	auto fsettings = new HTTPFileServerSettings;
 	fsettings.serverPathPrefix = "/diskuto/";
 	router.get("/diskuto/*", serveStaticFiles(settings.resourcePath, fsettings));
-	
+
 	return DiskutoWeb(settings);
 }
 
@@ -199,7 +199,7 @@ private final class DiskutoWebInterface {
 	{
 		auto topic = m_settings.commentStore.getComment(id).topic; // TODO: be more efficient here!
 		auto usr = getUser(req, m_settings, topic);
-		m_settings.commentStore.upvote(id, usr.id);
+		m_settings.commentStore.vote(id, usr.id, 1);
 		redirectBack(req);
 	}
 
@@ -208,7 +208,7 @@ private final class DiskutoWebInterface {
 	{
 		auto topic = m_settings.commentStore.getComment(id).topic; // TODO: be more efficient here!
 		auto usr = getUser(req, m_settings, topic);
-		m_settings.commentStore.downvote(id, usr.id);
+		m_settings.commentStore.vote(id, usr.id, -1);
 		redirectBack(req);
 	}
 
@@ -325,15 +325,14 @@ private final class DiskutoWebInterface {
 	void vote(HTTPServerRequest req, HTTPServerResponse res)
 	{
 		auto cmd = req.json;
-		auto dir = cmd["dir"].get!int;
+		VoteDirection dir = cmd["dir"].get!int > 0 ? VoteDirection.up : VoteDirection.down;
 		auto id = cmd["id"].get!string;
 		auto topic = m_settings.commentStore.getComment(id).topic; // TODO: be more efficient here!
 		auto usr = getUser(req, m_settings, topic);
 		enforce(usr.role >= StoredUser.Role.member, "Not allowed to vote!");
 
-		if (dir > 0) m_settings.commentStore.upvote(id, usr.id);
-		else if (dir < 0) m_settings.commentStore.downvote(id, usr.id);
-		res.writeJsonBody(["success": true]);
+		auto newdir = m_settings.commentStore.vote(id, usr.id, dir);
+		res.writeJsonBody(["success": true, "dir": cast(int)newdir]);
 	}
 
 	@errorDisplay!sendJsonError
@@ -377,7 +376,7 @@ private final class DiskutoWebInterface {
 		enforce(name.length < 40, "Name is too long.");
 		enforce(text.length > 0, "Missing message text.");
 		enforce(text.length < 4096, "Message text is too long.");
-		
+
 		if (email.length > 0) {
 			enforce(email.length < 80, "E-mail is too long.");
 			import vibe.utils.validation : validateEmail;

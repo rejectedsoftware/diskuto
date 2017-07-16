@@ -51,13 +51,13 @@
 			include diskuto.inc.commentContents
 
 			.error
-			
+
 			form.edit(method="POST", action="#{req.rootDir}ts/edit", onSubmit="return confirmEdit(this)")
 				input(type="hidden", name="id", value=comment.id)
 				textarea(name="text", rows=3, autocomplete="off")= comment.text
 				button(type="button", onClick="cancelEdit(this)")& Cancel
 				button(type="submit")& Submit
-		
+
 			form.delete(method="POST", action="#{req.rootDir}ts/delete", onSubmit="return confirmDelete(this)")
 				input(type="hidden", name="id", value=comment.id)
 				p& Do you really want to delete this comment?
@@ -67,19 +67,20 @@
 		.action-bar
 			- bool have_upvoted = usr.id.length && comment.upvotes.canFind(usr.id);
 			- bool have_downvoted = usr.id.length && comment.downvotes.canFind(usr.id);
-			- bool vote_disabled = have_upvoted || have_downvoted || comment.author == usr.id;
+			- bool downvote_disabled = have_downvoted || comment.author == usr.id;
+			- bool upvote_disabled = have_upvoted || comment.author == usr.id;
 			- auto vote_total = cast(long)comment.upvotes.length - cast(long)comment.downvotes.length;
-			
+
 			- if (usr.role >= StoredUser.Role.member)
 				.voting
 					form.vote-up(method="POST", action="#{req.rootDir}diskuto/up", onSubmit="return vote(this, 1)")
 						input(type="hidden", name="id", value=comment.id)
-						button(type="submit", disabled=vote_disabled, class=have_upvoted ? "chosen" : ""): arrow.up
+						button(type="submit", disabled=upvote_disabled, class=have_upvoted ? "chosen" : ""): arrow.up
 					.vote-count(class=vote_total<0?"neg":vote_total>0?"pos":"bal")= vote_total
 					form.vote-down(method="POST", action="#{req.rootDir}diskuto/down", onSubmit="return vote(this, -1)")
 						input(type="hidden", name="id", value=comment.id)
-						button(type="submit", disabled=vote_disabled, class=have_downvoted ? "chosen" : ""): arrow.down
-			
+						button(type="submit", disabled=downvote_disabled, class=have_downvoted ? "chosen" : ""): arrow.down
+
 			- if (usr.role >= StoredUser.Role.commenter && comment.author == usr.id && comment.age < web.settings.softEditTimeLimit || usr.isModerator)
 				button.edit-button(type="button", onClick="showEdit(this)")& Edit
 				button.delete-button(type="button", onClick="showDelete(this)")& Delete

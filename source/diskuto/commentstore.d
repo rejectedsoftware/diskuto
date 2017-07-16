@@ -12,13 +12,18 @@ interface DiskutoCommentStore {
 	void setCommentStatus(StoredComment.ID id, StoredComment.Status status);
 	void editComment(StoredComment.ID id, string new_text);
 	void deleteComment(StoredComment.ID id);
-	void upvote(StoredComment.ID id, StoredComment.UserID user);
-	void downvote(StoredComment.ID id, StoredComment.UserID user);
+	VoteDirection vote(StoredComment.ID id, StoredComment.UserID user, VoteDirection direction);
 	uint getActiveCommentCount(string topic);
 	void iterateAllComments(scope void delegate(ref StoredComment) del);
 	void iterateCommentsForTopic(string topic, scope void delegate(ref StoredComment) del);
 	void iterateLatestComments(scope void delegate(ref StoredComment) del);
+
+	deprecated("Use VoteDirection instead.")
+	final void vote(StoredComment.ID id, StoredComment.UserID user, int direction)
+	{ vote(id, user, direction < 0 ? VoteDirection.down : VoteDirection.up); }
 }
+
+enum VoteDirection { none = 0, up = 1, down = -1 }
 
 deprecated("Use DiskutoCommentStore instead.") alias DiskutoBackend = DiskutoCommentStore;
 

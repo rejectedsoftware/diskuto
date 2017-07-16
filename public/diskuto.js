@@ -48,10 +48,20 @@ function vote(self, dir)
 			count.classList.add(newcount < 0 ? "neg" : newcount > 0 ? "pos" : "bal");
 			var upbtn = ctx.comment.getElementsByClassName("vote-up")[0].getElementsByTagName("button")[0];
 			var downbtn = ctx.comment.getElementsByClassName("vote-down")[0].getElementsByTagName("button")[0];
-			upbtn.setAttribute("disabled", "");
-			downbtn.setAttribute("disabled", "");
-			if (dir < 0) downbtn.classList.add("chosen");
-			else if (dir > 0) upbtn.classList.add("chosen");
+			if (reply.dir < 0) {
+				downbtn.setAttribute("disabled", "");
+				downbtn.classList.add("chosen");
+			} else {
+				downbtn.removeAttribute("disabled");
+				downbtn.classList.remove("chosen");
+			}
+			if (reply.dir > 0) {
+				upbtn.setAttribute("disabled", "");
+				upbtn.classList.add("chosen");
+			} else {
+				upbtn.removeAttribute("disabled");
+				upbtn.classList.remove("chosen");
+			}
 		}
 	}
 	http.send(JSON.stringify({id: id, dir: dir}));
