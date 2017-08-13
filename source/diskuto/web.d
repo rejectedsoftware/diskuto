@@ -431,7 +431,25 @@ private final class DiskutoWebInterface {
 
 		if (is_spam_async)
 			m_settings.commentStore.setCommentStatus(comment.id, StoredComment.Status.spam);
+		else
+			sendNotifications(comment);
 		return comment;
+	}
+
+	private void sendNotifications(ref StoredComment comment)
+	{
+		if (!m_settings.smtpSettings) return;
+		EmailMessage msg;
+		msg.headers["Subject"] = format("Diskuto: New reply for %s", comment.topic);
+		msg.from = m_settings.notificationSender;
+		msg.body_ = render!("notification-email.dt", comment);
+
+		foreach (mail; m_settings.notificationEmails) {
+			msg.headers["To"] = mail;
+			sendMail(settings, mail);
+		}
+
+		// TODO: send to any posters in the reply chain that have entered an e-mail
 	}
 
 	private void redirectBack(HTTPServerRequest req, string field = null, string value = null)
