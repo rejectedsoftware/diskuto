@@ -524,8 +524,8 @@ private void streamComments(alias iterator)(HTTPServerResponse res)
 	res.bodyWriter.write(`{"success": true, [`);
 	iterator(delegate void(ref StoredComment c) {
 		import vibe.data.json : serializeToJson;
-		import vibe.stream.wrapper : StreamOutputRange;
-		auto r = StreamOutputRange(res.bodyWriter);
+		import vibe.stream.wrapper : streamOutputRange;
+		auto r = streamOutputRange(res.bodyWriter);
 		(&r).serializeToJson(c);
 	});
 	res.bodyWriter.write(`]}`);
