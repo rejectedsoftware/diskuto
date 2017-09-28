@@ -1,6 +1,14 @@
 language: d
 sudo: false
 
+addons:
+  apt:
+    packages:
+    - libevent-dev
+    - libssl-dev
+    - pkg-config
+    - zlib1g-dev
+
 script:
   - dub test
   - dub build --root=examples/embed-diet
