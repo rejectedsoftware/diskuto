@@ -1,14 +1,19 @@
 {
 	"fileVersion": 1,
 	"versions": {
-		"antispam": "0.1.2",
-		"diet-ng": "1.2.1",
+		"antispam": "0.1.3",
+		"botan": "1.12.9",
+		"botan-math": "1.0.3",
+		"diet-ng": "1.4.3",
 		"diskuto": {"path":"../.."},
+		"eventcore": "0.8.27",
 		"fuzzydate": "1.0.0",
 		"libasync": "0.8.3",
 		"libevent": "2.0.2+2.0.16",
 		"memutils": "0.4.9",
-		"openssl": "1.1.5+1.0.1g",
-		"vibe-d": "0.7.31"
+		"openssl": "1.1.6+1.0.1g",
+		"taggedalgebraic": "0.10.9+commit.1.g100714d",
+		"vibe-core": "1.3.0",
+		"vibe-d": "0.8.2"
 	}
 }
