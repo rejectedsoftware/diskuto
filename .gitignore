@@ -3,4 +3,8 @@ docs.json
 __dummy.html
 *.o
 *.obj
-__test__*__
+diskuto-test-*
+dub.selections.json
+libdiskuto.*
+examples/*/example
+examples/*/public/diskuto*
