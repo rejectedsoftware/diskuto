@@ -64,6 +64,8 @@ class MongoDBCommentStore : DiskutoCommentStore {
 
 	VoteDirection vote(StoredComment.ID id, StoredComment.UserID user, VoteDirection direction)
 	{
+		import std.typecons : Tuple;
+
 		// first see if an existing vote exists and needs to be neutralized
 		// {_id: BsonObjectID(...), $or: [{upvotes: {$elemMatch: {$eq: "..."}}}, {downvotes: {$elemMatch: {$eq: "..."}}}]}
 		static struct EQ { @name("$eq") string value; }
