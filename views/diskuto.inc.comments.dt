@@ -118,6 +118,14 @@
 
 		- commentForm(topic, usr, null);
 
+		- if (usr.isModerator)
+			form(method="POST", action="#{req.rootDir}diskuto/mark_all_as_spam")
+				input(type="hidden", name="topic", value=topic)
+				input#confirm_all_spam(type="checkbox", name="confirmed")
+				label(for="confirm_all_spam") Confirm marking of all comments in this topic as spam
+				button(type="submit") Mark all comments as spam (!)
+
+
 		.replies
 			- foreach (c; ctx.comments)
 				- if (usr.isModerator || c.isVisibleTo(usr.id))

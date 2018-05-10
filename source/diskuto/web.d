@@ -213,6 +213,28 @@ private final class DiskutoWebInterface {
 	}
 
 	@errorDisplay!sendWebError
+	void markAllAsSpam(HTTPServerRequest req, string topic, bool confirmed)
+	{
+		auto usr = getUser(req, m_settings, null);
+		enforce(usr.role >= StoredUser.Role.moderator,
+			"Not authorized to manage comments.");
+		if (!confirmed) redirectBack(req);
+		m_settings.commentStore.iterateCommentsForTopic(topic, (ref comment) {
+			if (comment.status == StoredComment.Status.active) {
+				m_settings.commentStore.setCommentStatus(comment.id, StoredComment.Status.spam);
+
+				// reclassify spam status
+				AntispamMessage msg;
+				comment.convertToAntispam(msg, m_antispam);
+				m_antispam.declassify(msg, false);
+				m_antispam.declassify(msg, true);
+			}
+		});
+
+		redirectBack(req);
+	}
+
+	@errorDisplay!sendWebError
 	void getRenderTopic(HTTPServerRequest req, string topic, string base)
 	{
 		auto web = DiskutoWeb(m_settings);
