@@ -101,8 +101,9 @@ struct DiskutoWeb {
 	}
 }
 
+/// private
 @path("manage")
-private final class DiskutoWebManagementInterface {
+final class DiskutoWebManagementInterface {
 	private {
 		DiskutoSettings m_settings;
 		AntispamState m_antispam;
@@ -168,7 +169,8 @@ private final class DiskutoWebManagementInterface {
 	}
 }
 
-private final class DiskutoWebInterface {
+/// private
+final class DiskutoWebInterface {
 	import diskuto.internal.webutils : User;
 
 	private {
@@ -199,7 +201,7 @@ private final class DiskutoWebInterface {
 	{
 		auto topic = m_settings.commentStore.getComment(id).topic; // TODO: be more efficient here!
 		auto usr = getUser(req, m_settings, topic);
-		m_settings.commentStore.vote(id, usr.id, 1);
+		m_settings.commentStore.vote(id, usr.id, VoteDirection.up);
 		redirectBack(req);
 	}
 
@@ -208,7 +210,7 @@ private final class DiskutoWebInterface {
 	{
 		auto topic = m_settings.commentStore.getComment(id).topic; // TODO: be more efficient here!
 		auto usr = getUser(req, m_settings, topic);
-		m_settings.commentStore.vote(id, usr.id, -1);
+		m_settings.commentStore.vote(id, usr.id, VoteDirection.down);
 		redirectBack(req);
 	}
 
