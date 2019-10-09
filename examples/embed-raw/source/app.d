@@ -26,13 +26,13 @@ final class WebFrontend {
 
 	void get(HTTPServerRequest req, HTTPServerResponse res, string _error = null)
 	{
-		import vibe.stream.wrapper : StreamOutputRange;
+		import vibe.stream.wrapper : streamOutputRange;
 
 		m_diskuto.setupRequest();
 
 		res.contentType = "text/html; charset=UTF-8";
 
-		auto dst = StreamOutputRange(res.bodyWriter);
+		auto dst = streamOutputRange(res.bodyWriter);
 		dst.put("<html><head><title>Diskuto raw embedding example</title></head>");
 		dst.put("<body><p>The comment section is embedded below:</p>");
 		m_diskuto.generateInclude(dst, req, "example");
