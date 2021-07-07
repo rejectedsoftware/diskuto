@@ -40,7 +40,7 @@ struct StoredComment {
 	}
 
 	ID id;
-	@byName CommentStatus status = CommentStatus.active;
+	@byName Status status = Status.active;
 	string topic;
 	ID replyTo;
 	UserID author;

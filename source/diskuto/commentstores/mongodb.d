@@ -29,8 +29,8 @@ class MongoDBCommentStore : DiskutoCommentStore {
 		// upgrade missing "clientAddress" field name
 		m_comments.update(["clientAddress": ["$exists": false]], ["$set": ["clientAddress": ""]], UpdateFlags.multiUpdate);
 		// upgrade old status field
-		m_comments.update(["status": cast(int)CommentStatus.active], ["$set": ["status": "active"]], UpdateFlags.multiUpdate);
-		m_comments.update(["status": cast(int)CommentStatus.disabled], ["$set": ["status": "disabled"]], UpdateFlags.multiUpdate);
+		m_comments.update(["status": cast(int)StoredComment.Status.active], ["$set": ["status": "active"]], UpdateFlags.multiUpdate);
+		m_comments.update(["status": cast(int)StoredComment.Status.disabled], ["$set": ["status": "disabled"]], UpdateFlags.multiUpdate);
 	}
 
 	StoredComment.ID postComment(StoredComment comment)
@@ -46,7 +46,7 @@ class MongoDBCommentStore : DiskutoCommentStore {
 		return cast(StoredComment)m_comments.findOne!(MongoStruct!StoredComment)(["_id": BsonObjectID.fromString(comment)]);
 	}
 
-	void setCommentStatus(StoredComment.ID id, CommentStatus status)
+	void setCommentStatus(StoredComment.ID id, StoredComment.Status status)
 	{
 		import std.conv : to;
 		m_comments.update(["_id": BsonObjectID.fromString(id)], ["$set": ["status": status.to!string]]);

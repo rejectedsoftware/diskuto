@@ -580,9 +580,9 @@ private User getUser(HTTPServerRequest req, DiskutoSettings settings, string top
 	if (settings.userStore) {
 		auto usr = settings.userStore.getLoggedInUser(req);
 		if (!usr.isNull) {
-			ret.user = usr;
+			ret.user = usr.get;
 			ret.registered = true;
-			ret.role = settings.userStore.getUserRole(usr.id, topic);
+			ret.role = settings.userStore.getUserRole(usr.get.id, topic);
 			return ret;
 		}
 	}

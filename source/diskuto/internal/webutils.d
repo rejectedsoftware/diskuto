@@ -140,7 +140,7 @@ auto getCommentsContext(HTTPServerRequest req, DiskutoWeb web, string topic)
 	if (web.settings.userStore) {
 		auto u = web.settings.userStore.getLoggedInUser(req);
 		if (!u.isNull) {
-			ret.user = u;
+			ret.user.user = u.get;
 			ret.user.registered = true;
 		}
 		ret.user.role = web.settings.userStore.getUserRole(ret.user.id, topic);
