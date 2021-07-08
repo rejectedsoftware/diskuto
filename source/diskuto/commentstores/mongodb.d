@@ -43,7 +43,9 @@ class MongoDBCommentStore : DiskutoCommentStore {
 
 	StoredComment getComment(StoredComment.ID comment)
 	{
-		return cast(StoredComment)m_comments.findOne!(MongoStruct!StoredComment)(["_id": BsonObjectID.fromString(comment)]);
+		auto ret = m_comments.findOne!(MongoStruct!StoredComment)(["_id": BsonObjectID.fromString(comment)]);
+		if (ret.isNull) throw new Exception("Unknown commend ID: " ~ comment);
+		return cast(StoredComment)ret.get;
 	}
 
 	void setCommentStatus(StoredComment.ID id, StoredComment.Status status)
