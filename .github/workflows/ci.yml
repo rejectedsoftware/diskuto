@@ -1,0 +1,27 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    name: CI
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dc: [dmd-latest, ldc-latest]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install D Compiler
+        uses: dlang-community/setup-dlang@v1
+        with:
+          compiler: ${{ matrix.dc }}
+
+      - uses: actions/cache@v2
+        with:
+          path: ~/.dub
+          key: ${{ matrix.dc }}-dub-${{ hashFiles('**/dub.selections.json') }}
+          restore-keys: |
+            ${{ matrix.dc }}-dub-
+
+      - name: Run Tests
+        run: |
+          dub build
+          dub test
