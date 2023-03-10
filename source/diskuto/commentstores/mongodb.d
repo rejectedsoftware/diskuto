@@ -31,6 +31,8 @@ class MongoDBCommentStore : DiskutoCommentStore {
 		// upgrade old status field
 		m_comments.update(["status": cast(int)StoredComment.Status.active], ["$set": ["status": "active"]], UpdateFlags.multiUpdate);
 		m_comments.update(["status": cast(int)StoredComment.Status.disabled], ["$set": ["status": "disabled"]], UpdateFlags.multiUpdate);
+
+		m_comments.createIndex(["topic": 1, "status": 1]);
 	}
 
 	StoredComment.ID postComment(StoredComment comment)
