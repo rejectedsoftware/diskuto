@@ -31,6 +31,8 @@ class MongoDBCommentStore : DiskutoCommentStore {
 		// upgrade old status field
 		m_comments.update(["status": cast(int)StoredComment.Status.active], ["$set": ["status": "active"]], UpdateFlags.multiUpdate);
 		m_comments.update(["status": cast(int)StoredComment.Status.disabled], ["$set": ["status": "disabled"]], UpdateFlags.multiUpdate);
+
+		m_comments.createIndex(["topic": 1, "status": 1]);
 	}
 
 	StoredComment.ID postComment(StoredComment comment)
@@ -43,7 +45,9 @@ class MongoDBCommentStore : DiskutoCommentStore {
 
 	StoredComment getComment(StoredComment.ID comment)
 	{
-		return cast(StoredComment)m_comments.findOne!(MongoStruct!StoredComment)(["_id": BsonObjectID.fromString(comment)]);
+		auto ret = m_comments.findOne!(MongoStruct!StoredComment)(["_id": BsonObjectID.fromString(comment)]);
+		if (ret.isNull) throw new Exception("Unknown commend ID: " ~ comment);
+		return cast(StoredComment)ret.get;
 	}
 
 	void setCommentStatus(StoredComment.ID id, StoredComment.Status status)
