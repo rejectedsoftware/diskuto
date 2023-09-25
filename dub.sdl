@@ -1,7 +1,7 @@
 ﻿name "diskuto"
 description "Embedded comment engine"
 authors "Sönke Ludwig"
-copyright "Copyright © 2017-2020, Sönke Ludwig"
+copyright "Copyright © 2017-2023, Sönke Ludwig"
 license "MIT"
 dependency "vibe-d:mongodb" version=">=0.7.31 <0.10.0-0"
 dependency "vibe-d:web" version=">=0.7.31 <0.10.0-0"

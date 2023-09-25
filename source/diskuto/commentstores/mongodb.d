@@ -25,12 +25,12 @@ class MongoDBCommentStore : DiskutoCommentStore {
 
 		// upgrade "author" field name
 		foreach (c; m_comments.find(["userID": ["$exists": true]], ["userID": true]))
-			m_comments.update(["_id": c["_id"]], ["$unset": ["userID": Bson(null)], "$set": ["author": c["userID"]]]);
+			m_comments.updateOne(["_id": c["_id"]], ["$unset": ["userID": Bson(null)], "$set": ["author": c["userID"]]]);
 		// upgrade missing "clientAddress" field name
-		m_comments.update(["clientAddress": ["$exists": false]], ["$set": ["clientAddress": ""]], UpdateFlags.multiUpdate);
+		m_comments.updateMany(["clientAddress": ["$exists": false]], ["$set": ["clientAddress": ""]]);
 		// upgrade old status field
-		m_comments.update(["status": cast(int)StoredComment.Status.active], ["$set": ["status": "active"]], UpdateFlags.multiUpdate);
-		m_comments.update(["status": cast(int)StoredComment.Status.disabled], ["$set": ["status": "disabled"]], UpdateFlags.multiUpdate);
+		m_comments.updateMany(["status": cast(int)StoredComment.Status.active], ["$set": ["status": "active"]]);
+		m_comments.updateMany(["status": cast(int)StoredComment.Status.disabled], ["$set": ["status": "disabled"]]);
 
 		m_comments.createIndex(["topic": 1, "status": 1]);
 	}
@@ -39,7 +39,7 @@ class MongoDBCommentStore : DiskutoCommentStore {
 	{
 		auto mc = MongoStruct!StoredComment(comment);
 		mc._id = BsonObjectID.generate();
-		m_comments.insert(mc);
+		m_comments.insertOne(mc);
 		return mc._id.toString();
 	}
 
@@ -53,17 +53,17 @@ class MongoDBCommentStore : DiskutoCommentStore {
 	void setCommentStatus(StoredComment.ID id, StoredComment.Status status)
 	{
 		import std.conv : to;
-		m_comments.update(["_id": BsonObjectID.fromString(id)], ["$set": ["status": status.to!string]]);
+		m_comments.updateOne(["_id": BsonObjectID.fromString(id)], ["$set": ["status": status.to!string]]);
 	}
 
 	void editComment(StoredComment.ID id, string new_text)
 	{
-		m_comments.update(["_id": BsonObjectID.fromString(id)], ["$set": ["text": new_text]]);
+		m_comments.updateOne(["_id": BsonObjectID.fromString(id)], ["$set": ["text": new_text]]);
 	}
 
 	void deleteComment(StoredComment.ID id)
 	{
-		m_comments.remove(["_id": BsonObjectID.fromString(id)]);
+		m_comments.deleteOne(["_id": BsonObjectID.fromString(id)]);
 	}
 
 	VoteDirection vote(StoredComment.ID id, StoredComment.UserID user, VoteDirection direction)
@@ -91,7 +91,7 @@ class MongoDBCommentStore : DiskutoCommentStore {
 		if (direction != VoteDirection.none) {
 			static struct DQ { @name("$ne") string ne; }
 			static struct Q { BsonObjectID _id; DQ downvotes; DQ author; }
-			m_comments.update(Q(BsonObjectID.fromString(id), DQ(user), DQ(user)), ["$addToSet": [direction == VoteDirection.up ? "upvotes" : "downvotes": user]]);
+			m_comments.updateOne(Q(BsonObjectID.fromString(id), DQ(user), DQ(user)), ["$addToSet": [direction == VoteDirection.up ? "upvotes" : "downvotes": user]]);
 		}
 
 		return direction;
@@ -100,7 +100,7 @@ class MongoDBCommentStore : DiskutoCommentStore {
 	uint getActiveCommentCount(string topic)
 	{
 		import std.conv : to;
-		return m_comments.count(["topic": topic, "status": "active"]).to!uint;
+		return m_comments.countDocuments(["topic": topic, "status": "active"]).to!uint;
 	}
 
 	void iterateAllComments(scope void delegate(ref StoredComment) del)
