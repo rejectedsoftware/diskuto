@@ -100,7 +100,7 @@ class MongoDBCommentStore : DiskutoCommentStore {
 	uint getActiveCommentCount(string topic)
 	{
 		import std.conv : to;
-		return m_comments.countDocuments(["topic": topic, "status": "active"]).to!uint;
+		return m_comments.count(["topic": topic, "status": "active"]).to!uint;
 	}
 
 	void iterateAllComments(scope void delegate(ref StoredComment) del)
